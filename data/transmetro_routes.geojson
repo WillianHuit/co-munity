@@ -1,0 +1,55 @@
+[
+  {
+    "linea": "Línea 1",
+    "color": "#E53935",
+    "ruta": [
+      {"nombre": "Centra Sur", "lat": 14.582, "lng": -90.553},
+      {"nombre": "Trébol", "lat": 14.610, "lng": -90.551},
+      {"nombre": "Plaza Municipal", "lat": 14.622, "lng": -90.532},
+      {"nombre": "Centro Cívico", "lat": 14.625, "lng": -90.519}
+    ]
+  },
+  {
+    "linea": "Línea 2",
+    "color": "#7E57C2",
+    "ruta": [
+      {"nombre": "San Sebastián", "lat": 14.639, "lng": -90.553},
+      {"nombre": "Hipódromo del Norte", "lat": 14.650, "lng": -90.505}
+    ]
+  },
+  {
+    "linea": "Línea 6",
+    "color": "#FFB300",
+    "ruta": [
+      {"nombre": "San Martín", "lat": 14.670, "lng": -90.503},
+      {"nombre": "Parque Colón", "lat": 14.643, "lng": -90.517},
+      {"nombre": "Cerro del Carmen", "lat": 14.651, "lng": -90.511}
+    ]
+  },
+  {
+    "linea": "Línea 5",
+    "color": "#29B6F6",
+    "ruta": [
+      {"nombre": "Atlantida", "lat": 14.691, "lng": -90.500},
+      {"nombre": "Parque Colón", "lat": 14.643, "lng": -90.517}
+    ]
+  },
+  {
+    "linea": "Línea 12",
+    "color": "#F4511E",
+    "ruta": [
+      {"nombre": "El Trébol", "lat": 14.610, "lng": -90.551},
+      {"nombre": "Plaza Municipal", "lat": 14.622, "lng": -90.532},
+      {"nombre": "Centra Sur", "lat": 14.582, "lng": -90.553}
+    ]
+  },
+  {
+    "linea": "Línea 18",
+    "color": "#43A047",
+    "ruta": [
+      {"nombre": "Parque Colón", "lat": 14.643, "lng": -90.517},
+      {"nombre": "La Merced", "lat": 14.647, "lng": -90.515},
+      {"nombre": "Santa Teresa", "lat": 14.659, "lng": -90.509}
+    ]
+  }
+]
