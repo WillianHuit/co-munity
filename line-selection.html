@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Co-Munity - Selector de Rutas</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .route-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .controls-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .input-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .input-group input, .input-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        
+        .json-output {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .json-output h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .json-textarea {
+            width: 100%;
+            height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        
+        .instructions {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions h4 {
+            margin-top: 0;
+            color: #0c4a6e;
+        }
+        
+        .instructions ul {
+            margin-bottom: 0;
+            color: #0c4a6e;
+        }
+        
+        .route-info {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .route-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .point-marker {
+            background-color: #3b82f6;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+        }
+        
+        .routing-controls {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .routing-controls h5 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        
+        .routing-options {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .info-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">Co-Munity</h1>
+            <p class="tagline">Selector de Rutas del Transmetro</p>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">Ver Mapa</a>
+                <a href="reports-list.html" class="nav-link">Lista de Reportes</a>
+                <a href="line-selection.html" class="nav-link active">Selector de Rutas</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="instructions">
+                <h4>📍 Instrucciones de Uso</h4>
+                <ul>
+                    <li><strong>Crear nueva ruta:</strong> Ingresa el nombre y color de la línea, luego haz clic en "Iniciar Nueva Ruta"</li>
+                    <li><strong>Agregar puntos:</strong> Haz clic en el mapa para agregar estaciones a la ruta actual</li>
+                    <li><strong>Nombrar estaciones:</strong> Se te pedirá el nombre de cada estación al hacer clic</li>
+                    <li><strong>Finalizar ruta:</strong> Haz clic en "Finalizar Ruta Actual" para completar</li>
+                    <li><strong>Exportar JSON:</strong> Copia el JSON generado para usar en tu proyecto</li>
+                </ul>
+            </div>
+
+            <div class="route-controls">
+                <h3>Configuración de Ruta</h3>
+                
+                <!-- Import JSON Section -->
+                <div class="controls-row" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 15px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label for="importJson">Importar JSON Existente:</label>
+                        <textarea id="importJson" placeholder="Pega aquí el JSON de rutas existentes..." style="height: 80px; resize: vertical; font-family: 'Courier New', monospace; font-size: 12px;"></textarea>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button id="loadJson" class="btn btn-primary">Cargar JSON</button>
+                        <button id="loadFromFile" class="btn btn-success">Cargar desde Archivo</button>
+                        <input type="file" id="fileInput" accept=".json" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Create New Route Section -->
+                <div class="controls-row">
+                    <div class="input-group">
+                        <label for="lineName">Nombre de la Línea:</label>
+                        <input type="text" id="lineName" placeholder="Ej: Línea 7" />
+                    </div>
+                    <div class="input-group">
+                        <label for="lineColor">Color:</label>
+                        <input type="color" id="lineColor" value="#3b82f6" />
+                    </div>
+                    <button id="startRoute" class="btn btn-primary">Iniciar Nueva Ruta</button>
+                    <button id="finishRoute" class="btn btn-success" disabled>Finalizar Ruta Actual</button>
+                    <button id="clearAll" class="btn btn-danger">Limpiar Todo</button>
+                </div>
+                
+                <!-- Routing Controls -->
+                <div class="routing-controls">
+                    <h5>🛣️ Opciones de Ruta</h5>
+                    <div class="routing-options">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="useStreetRouting" />
+                            <label for="useStreetRouting">Seguir calles (routing automático)</label>
+                        </div>
+                        <div class="input-group">
+                            <label for="routingMode">Modo de transporte:</label>
+                            <select id="routingMode">
+                                <option value="driving-car">Automóvil</option>
+                                <option value="foot-walking">Caminando</option>
+                                <option value="cycling-regular">Bicicleta</option>
+                            </select>
+                        </div>
+                        <button id="applyRouting" class="btn btn-primary" disabled>Aplicar Routing</button>
+                    </div>
+                    <p class="info-text">
+                        Nota: El routing automático conectará las estaciones siguiendo las calles reales.
+                        Requiere conexión a internet.
+                    </p>
+                </div>
+                
+                <div id="currentRouteInfo" class="route-info" style="display: none;">
+                    <p><strong>Ruta Actual:</strong> <span id="currentRouteName">-</span></p>
+                    <p><strong>Puntos agregados:</strong> <span id="pointCount">0</span></p>
+                    <p><strong>Instrucción:</strong> Haz clic en el mapa para agregar estaciones</p>
+                </div>
+            </div>
+
+            <!-- Edit Mode Controls -->
+            <div id="editControls" class="route-controls" style="display: none;">
+                <h3>Modo de Edición</h3>
+                <div class="controls-row">
+                    <div class="input-group">
+                        <label>Ruta Seleccionada:</label>
+                        <select id="routeSelector">
+                            <option value="">Selecciona una ruta para editar</option>
+                        </select>
+                    </div>
+                    <button id="editRoute" class="btn btn-primary">Editar Ruta</button>
+                    <button id="deleteRoute" class="btn btn-danger">Eliminar Ruta</button>
+                    <button id="exitEdit" class="btn" style="background-color: #6b7280; color: white;">Salir de Edición</button>
+                </div>
+                <div class="route-info">
+                    <p><strong>Instrucciones:</strong> Arrastra las estaciones para reposicionarlas. Haz clic derecho en una estación para eliminarla.</p>
+                </div>
+            </div>
+
+            <div id="map" style="height: 500px; border-radius: 8px; overflow: hidden;"></div>
+
+            <div class="json-output">
+                <h3>JSON Generado</h3>
+                <textarea id="jsonOutput" class="json-textarea" placeholder="El JSON de las rutas aparecerá aquí..."></textarea>
+                <button id="copyJson" class="btn btn-primary" style="margin-top: 10px;">Copiar JSON</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Co-Munity. Mejorando nuestras comunidades juntos. | Desarrollado por Willian Huit</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="line-selection.js"></script>
+</body>
+</html>
