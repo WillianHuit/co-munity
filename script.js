@@ -78,24 +78,20 @@ function closeModal() {
 async function loadReports() {
     try {
         showLoading();
-        
-        // Check if config is available
-        if (typeof DATA_CONFIG === 'undefined') {
-            console.warn('Data config not found, using sample data');
-            loadSampleData();
-            return;
-        }
-        
-        const response = await fetch(DATA_CONFIG.REPORTS_URL);
-        
+
+        // URL del Google Sheets publicado
+        const googleSheetsURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIKh_vys71-FBFCWFW3cSofAEjIhq9CncE2Brk_qzgcKXZ1XSjkYCET-J2YxM47IXbw5szIVz3v2as/pub?gid=47348234&single=true&output=csv';
+        const response = await fetch(googleSheetsURL);
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const csvText = await response.text();
         const reports = parseCSV(csvText);
+        console.log('Loaded reports:', reports);
         displayReports(reports);
-        
+
     } catch (error) {
         console.error('Error loading reports:', error);
         showError('Error al cargar los reportes. Mostrando datos de ejemplo.');
@@ -108,23 +104,32 @@ function parseCSV(csvText) {
     const lines = csvText.split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     const reports = [];
-    
+
     for (let i = 1; i < lines.length; i++) {
         if (lines[i].trim()) {
             const values = lines[i].split(',').map(v => v.trim());
             const report = {};
-            
+
             headers.forEach((header, index) => {
                 report[header] = values[index] || '';
             });
-            
-            // Validate required fields
-            if (report.lat && report.lng && report.tipo) {
+
+            // Validate required fields and coordinate ranges
+            const lat = parseFloat(report.lat);
+            const lng = parseFloat(report.lng);
+
+            if (
+                !isNaN(lat) && lat >= -90 && lat <= 90 &&
+                !isNaN(lng) && lng >= -180 && lng <= 180 &&
+                report.tipo
+            ) {
                 reports.push(report);
+            } else {
+                console.warn('Invalid report skipped:', report);
             }
         }
     }
-    
+
     return reports;
 }
 
@@ -195,44 +200,6 @@ function formatDate(dateString) {
 
 // Load sample data for demonstration
 function loadSampleData() {
-    const sampleReports = [
-        {
-            lat: 14.6349,
-            lng: -90.5069,
-            tipo: 'Bache',
-            descripcion: 'Bache grande en la calzada principal',
-            nombre: 'Juan Pérez',
-            fecha: '2024-01-15',
-            estado: 'Pendiente'
-        },
-        {
-            lat: 14.6280,
-            lng: -90.5150,
-            tipo: 'Fuga de agua',
-            descripcion: 'Fuga en tubería principal causa inundación',
-            nombre: 'María González',
-            fecha: '2024-01-14',
-            estado: 'En proceso'
-        },
-        {
-            lat: 14.6400,
-            lng: -90.5100,
-            tipo: 'Alumbrado público',
-            descripcion: 'Poste de luz fundido desde hace una semana',
-            nombre: 'Carlos López',
-            fecha: '2024-01-13',
-            estado: 'Reportado'
-        },
-        {
-            lat: 14.6320,
-            lng: -90.5200,
-            tipo: 'Basura',
-            descripcion: 'Acumulación de basura en esquina',
-            nombre: 'Ana Martínez',
-            fecha: '2024-01-12',
-            estado: 'Resuelto'
-        }
-    ];
     
     displayReports(sampleReports);
 }
