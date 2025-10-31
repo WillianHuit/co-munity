@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://willianhuit.github.io/co-munity/sitemap.xml
