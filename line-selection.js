@@ -80,6 +80,75 @@ function updateRoutingMode() {
     routingMode = document.getElementById('routingMode').value;
 }
 
+// Apply routing to current route
+async function applyRoutingToCurrentRoute() {
+    if (!currentRoute || currentRoute.ruta.length < 2) {
+        alert('Necesitas al menos 2 estaciones para aplicar routing');
+        return;
+    }
+    
+    try {
+        document.getElementById('applyRouting').disabled = true;
+        document.getElementById('applyRouting').textContent = 'Aplicando...';
+        
+        const routedCoordinates = await getRoutedPathOSRM(currentRoute.ruta);
+        if (routedCoordinates && routedCoordinates.length > 0) {
+            // Update the polyline with the routed path
+            if (currentRoute.polyline) {
+                map.removeLayer(currentRoute.polyline);
+            }
+            
+            currentRoute.polyline = L.polyline(routedCoordinates, {
+                color: currentRoute.color,
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '5, 5'
+            }).addTo(map);
+            
+            // Store routed coordinates for later use
+            currentRoute.routedCoordinates = routedCoordinates;
+            
+            alert('Routing aplicado exitosamente');
+        }
+    } catch (error) {
+        console.error('Error applying routing:', error);
+        alert('Error al aplicar routing: ' + error.message);
+    } finally {
+        document.getElementById('applyRouting').disabled = false;
+        document.getElementById('applyRouting').textContent = 'Aplicar Routing';
+    }
+}
+
+// Get routed path using OSRM (free, no API key required)
+async function getRoutedPathOSRM(stations) {
+    if (stations.length < 2) return null;
+    
+    try {
+        // Construir coordenadas para OSRM
+        const coordinates = stations.map(station => `${station.lng},${station.lat}`).join(';');
+        
+        const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordinates}?geometries=geojson&overview=full`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.routes && data.routes[0] && data.routes[0].geometry) {
+            // Convertir coordenadas [lng, lat] a [lat, lng] para Leaflet
+            return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+        }
+        
+        return null;
+        
+    } catch (error) {
+        console.error('OSRM routing error:', error);
+        // Fallback: usar línea directa si falla el routing
+        return stations.map(station => [station.lat, station.lng]);
+    }
+}
+
 // Start creating a new route
 function startNewRoute() {
     const lineName = document.getElementById('lineName').value.trim();
@@ -101,7 +170,8 @@ function startNewRoute() {
         color: lineColor,
         ruta: [],
         polyline: null,
-        markers: []
+        markers: [],
+        routedCoordinates: null
     };
     
     isCreatingRoute = true;
@@ -147,83 +217,6 @@ function addPointToRoute(latlng) {
     updateRouteInfo();
 }
 
-// Get routed path using OpenRouteService
-async function getRoutedPath(stations) {
-    if (stations.length < 2) return null;
-    
-    try {
-        const coordinates = stations.map(station => [station.lng, station.lat]);
-        
-        const requestBody = {
-            coordinates: coordinates,
-            format: "geojson",
-            profile: routingMode,
-            options: {
-                avoid_features: ["highways"] // Evitar autopistas para transporte público
-            }
-        };
-        
-        const response = await fetch('https://api.openrouteservice.org/v2/directions/' + routingMode + '/geojson', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
-                'Authorization': ORS_API_KEY,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.features && data.features[0] && data.features[0].geometry) {
-            // Convertir coordenadas [lng, lat] a [lat, lng] para Leaflet
-            return data.features[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-        }
-        
-        return null;
-        
-    } catch (error) {
-        console.error('Routing error:', error);
-        
-        // Fallback: usar línea directa si falla el routing
-        console.warn('Routing failed, using direct line');
-        return stations.map(station => [station.lat, station.lng]);
-    }
-}
-
-// Alternative: Use OSRM (free, no API key required)
-async function getRoutedPathOSRM(stations) {
-    if (stations.length < 2) return null;
-    
-    try {
-        // Construir coordenadas para OSRM
-        const coordinates = stations.map(station => `${station.lng},${station.lat}`).join(';');
-        
-        const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordinates}?geometries=geojson`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.routes && data.routes[0] && data.routes[0].geometry) {
-            // Convertir coordenadas [lng, lat] a [lat, lng] para Leaflet
-            return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-        }
-        
-        return null;
-        
-    } catch (error) {
-        console.error('OSRM routing error:', error);
-        return stations.map(station => [station.lat, station.lng]);
-    }
-}
-
 // Update the route polyline
 function updateRoutePolyline() {
     if (currentRoute.polyline) {
@@ -231,25 +224,16 @@ function updateRoutePolyline() {
     }
     
     if (currentRoute.ruta.length > 1) {
-        if (useStreetRouting) {
-            // Si está activado el routing, usar línea directa temporalmente
-            // El usuario debe hacer clic en "Aplicar Routing" para obtener la ruta real
-            const latLngs = currentRoute.ruta.map(point => [point.lat, point.lng]);
-            currentRoute.polyline = L.polyline(latLngs, {
-                color: currentRoute.color,
-                weight: 4,
-                opacity: 0.5,
-                dashArray: '10, 10' // Más punteado para indicar que es temporal
-            }).addTo(map);
-        } else {
-            const latLngs = currentRoute.ruta.map(point => [point.lat, point.lng]);
-            currentRoute.polyline = L.polyline(latLngs, {
-                color: currentRoute.color,
-                weight: 4,
-                opacity: 0.7,
-                dashArray: '5, 5'
-            }).addTo(map);
-        }
+        const latLngs = currentRoute.ruta.map(point => [point.lat, point.lng]);
+        const dashArray = useStreetRouting ? '10, 10' : '5, 5';
+        const opacity = useStreetRouting ? 0.5 : 0.7;
+        
+        currentRoute.polyline = L.polyline(latLngs, {
+            color: currentRoute.color,
+            weight: 4,
+            opacity: opacity,
+            dashArray: dashArray
+        }).addTo(map);
     }
     
     // Update apply routing button state
@@ -275,6 +259,11 @@ function finishCurrentRoute() {
         ruta: [...currentRoute.ruta]
     };
     
+    // Include routed coordinates if available
+    if (currentRoute.routedCoordinates) {
+        routeData.routedCoordinates = currentRoute.routedCoordinates;
+    }
+    
     routes.push(routeData);
     
     // Reset current route
@@ -292,7 +281,7 @@ function finishCurrentRoute() {
 
 // Clear all routes
 function clearAllRoutes() {
-    if (!confirm('¿Estás seguro de que quieres eliminar todas las rutas?')) {
+    if (routes.length > 0 && !confirm('¿Estás seguro de que quieres eliminar todas las rutas?')) {
         return;
     }
     
@@ -338,7 +327,6 @@ function loadFromJson() {
         routes = importedRoutes;
         displayAllRoutes();
         updateJsonOutput();
-        updateRouteSelector();
         
         // Clear import textarea
         document.getElementById('importJson').value = '';
@@ -380,7 +368,7 @@ function displayAllRoutes() {
     });
 }
 
-// Display a single route on map
+// Display a single route on map (modified for routing support)
 function displayRoute(route, routeIndex) {
     const { linea, color, ruta } = route;
     
@@ -451,6 +439,9 @@ function updateStationCoordinates(routeIndex, pointIndex, newLatLng) {
     routes[routeIndex].ruta[pointIndex].lat = parseFloat(newLatLng.lat.toFixed(7));
     routes[routeIndex].ruta[pointIndex].lng = parseFloat(newLatLng.lng.toFixed(7));
     
+    // Clear routed coordinates as they are no longer valid
+    delete routes[routeIndex].routedCoordinates;
+    
     // Refresh the route display
     displayAllRoutes();
     updateJsonOutput();
@@ -464,6 +455,10 @@ function deleteStation(routeIndex, pointIndex) {
     }
     
     routes[routeIndex].ruta.splice(pointIndex, 1);
+    
+    // Clear routed coordinates as they are no longer valid
+    delete routes[routeIndex].routedCoordinates;
+    
     displayAllRoutes();
     updateJsonOutput();
 }
