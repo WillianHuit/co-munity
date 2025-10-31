@@ -12,6 +12,12 @@ let routingMode = 'driving-car';
 // OpenRouteService API key (necesitarás registrarte para obtener una gratuita)
 const ORS_API_KEY = '5b3ce3597851110001cf6248a1b2c3c7d4e84c8b8f7b4b4b4b4b4b4b'; // Reemplaza con tu API key
 
+// Variables para puntos de corrección
+let correctionPoints = [];
+
+// Variable para el modo de operación
+let operationMode = 'station'; // Valores posibles: 'station', 'correction'
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
@@ -30,49 +36,97 @@ function initializeMap() {
         maxZoom: 19
     }).addTo(map);
     
-    // Map click event for adding points
+    // Map click event para agregar estaciones o puntos de corrección
     map.on('click', function(e) {
-        if (isCreatingRoute && currentRoute) {
-            addPointToRoute(e.latlng);
+        if (isCreatingRoute || editMode) {
+            if (operationMode === 'station') {
+                addPointToRoute(e.latlng);
+            } else if (operationMode === 'correction') {
+                addCorrectionPoint(e.latlng);
+            }
         }
     });
 }
 
-// Setup event listeners
-function setupEventListeners() {
-    const startRouteBtn = document.getElementById('startRoute');
-    const finishRouteBtn = document.getElementById('finishRoute');
-    const clearAllBtn = document.getElementById('clearAll');
-    const copyJsonBtn = document.getElementById('copyJson');
-    const loadJsonBtn = document.getElementById('loadJson');
-    const loadFromFileBtn = document.getElementById('loadFromFile');
-    const fileInput = document.getElementById('fileInput');
-    const editRouteBtn = document.getElementById('editRoute');
-    const deleteRouteBtn = document.getElementById('deleteRoute');
-    const exitEditBtn = document.getElementById('exitEdit');
-    const useStreetRoutingCheckbox = document.getElementById('useStreetRouting');
-    const routingModeSelect = document.getElementById('routingMode');
-    const applyRoutingBtn = document.getElementById('applyRouting');
-    const applyEditRoutingBtn = document.getElementById('applyEditRouting');
-    const removeRoutingBtn = document.getElementById('removeRouting');
-    const editRoutingModeSelect = document.getElementById('editRoutingMode');
+// Add a point to the current route (station)
+function addPointToRoute(latlng) {
+    const stationName = prompt('Nombre de la estación:');
+    if (!stationName) return;
     
-    startRouteBtn.addEventListener('click', startNewRoute);
-    finishRouteBtn.addEventListener('click', finishCurrentRoute);
-    clearAllBtn.addEventListener('click', clearAllRoutes);
-    copyJsonBtn.addEventListener('click', copyJsonToClipboard);
-    loadJsonBtn.addEventListener('click', loadFromJson);
-    loadFromFileBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', loadFromFile);
-    editRouteBtn.addEventListener('click', startEditMode);
-    deleteRouteBtn.addEventListener('click', deleteSelectedRoute);
-    exitEditBtn.addEventListener('click', exitEditMode);
-    useStreetRoutingCheckbox.addEventListener('change', toggleStreetRouting);
-    routingModeSelect.addEventListener('change', updateRoutingMode);
-    applyRoutingBtn.addEventListener('click', applyRoutingToCurrentRoute);
-    applyEditRoutingBtn.addEventListener('click', applyRoutingToSelectedRoute);
-    removeRoutingBtn.addEventListener('click', removeRoutingFromSelectedRoute);
-    editRoutingModeSelect.addEventListener('change', updateEditRoutingMode);
+    const point = {
+        nombre: stationName,
+        lat: parseFloat(latlng.lat.toFixed(7)),
+        lng: parseFloat(latlng.lng.toFixed(7))
+    };
+    
+    currentRoute.ruta.push(point);
+    
+    // Create marker
+    const marker = L.marker([latlng.lat, latlng.lng], {
+        icon: L.divIcon({
+            className: 'point-marker',
+            html: `<div style="
+                background-color: ${currentRoute.color}; 
+                border: 2px solid white;
+                border-radius: 50%;
+                width: 12px;
+                height: 12px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            "></div>`,
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        })
+    }).addTo(map);
+    
+    marker.bindPopup(`<strong>${stationName}</strong><br>Línea: ${currentRoute.linea}`);
+    currentRoute.markers.push(marker);
+    
+    // Update or create polyline
+    updateRoutePolyline();
+    updateRouteInfo();
+}
+
+// Add a correction point
+function addCorrectionPoint(latlng) {
+    const point = {
+        lat: parseFloat(latlng.lat.toFixed(7)),
+        lng: parseFloat(latlng.lng.toFixed(7))
+    };
+    
+    correctionPoints.push(point);
+    
+    // Add marker for correction point
+    const marker = L.circleMarker([point.lat, point.lng], {
+        radius: 6,
+        fillColor: '#ff5722',
+        color: '#ffffff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8
+    }).addTo(map);
+    
+    marker.bindPopup('Punto de corrección<br><button class="remove-correction-btn">Eliminar</button>').openPopup();
+    
+    // Add event listener to remove correction point
+    marker.on('popupopen', function() {
+        const removeBtn = document.querySelector('.remove-correction-btn');
+        removeBtn.addEventListener('click', () => removeCorrectionPoint(point, marker));
+    });
+    
+    // Store marker for removal if needed
+    if (isCreatingRoute && currentRoute) {
+        currentRoute.correctionMarkers = currentRoute.correctionMarkers || [];
+        currentRoute.correctionMarkers.push(marker);
+    } else if (editMode && editingRoute !== null) {
+        routes[editingRoute].correctionMarkers = routes[editingRoute].correctionMarkers || [];
+        routes[editingRoute].correctionMarkers.push(marker);
+    }
+}
+
+// Remove a correction point
+function removeCorrectionPoint(point, marker) {
+    correctionPoints = correctionPoints.filter(p => p.lat !== point.lat || p.lng !== point.lng);
+    map.removeLayer(marker);
 }
 
 // Toggle street routing
@@ -86,88 +140,90 @@ function updateRoutingMode() {
     routingMode = document.getElementById('routingMode').value;
 }
 
-// Apply routing to current route
-async function applyRoutingToCurrentRoute() {
-    if (!currentRoute || currentRoute.ruta.length < 2) {
-        alert('Necesitas al menos 2 estaciones para aplicar routing');
-        return;
+// Apply routing with correction points
+async function applyRoutingWithCorrections(route, routingMode) {
+    if (!route || route.ruta.length < 2) {
+        alert('La ruta debe tener al menos 2 estaciones para aplicar routing');
+        return null;
     }
     
     try {
-        document.getElementById('applyRouting').disabled = true;
-        document.getElementById('applyRouting').textContent = 'Aplicando...';
+        // Combine route stations and correction points
+        const allPoints = [...route.ruta, ...correctionPoints];
+        const sortedPoints = allPoints.map(point => [point.lng, point.lat]);
         
-        const routedCoordinates = await getRoutedPathOSRM(currentRoute.ruta);
-        if (routedCoordinates && routedCoordinates.length > 0) {
-            // Update the polyline with the routed path
-            if (currentRoute.polyline) {
-                map.removeLayer(currentRoute.polyline);
-            }
-            
-            currentRoute.polyline = L.polyline(routedCoordinates, {
-                color: currentRoute.color,
-                weight: 4,
-                opacity: 0.7,
-                dashArray: '5, 5'
-            }).addTo(map);
-            
-            // Store routed coordinates for later use
-            currentRoute.routedCoordinates = routedCoordinates;
-            
-            alert('Routing aplicado exitosamente');
+        // If the route is circular, connect the last point to the first
+        if (route.circular) {
+            sortedPoints.push(sortedPoints[0]);
         }
+        
+        const response = await fetch(`https://router.project-osrm.org/route/v1/${routingMode}/${sortedPoints.join(';')}?geometries=geojson&overview=full`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.routes && data.routes[0] && data.routes[0].geometry) {
+            return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+        }
+        
+        return null;
     } catch (error) {
-        console.error('Error applying routing:', error);
-        alert('Error al aplicar routing: ' + error.message);
-    } finally {
-        document.getElementById('applyRouting').disabled = false;
-        document.getElementById('applyRouting').textContent = 'Aplicar Routing';
+        console.error('Error applying routing with corrections:', error);
+        return null;
+    }
+}
+
+// Apply routing to current route
+async function applyRoutingToCurrentRoute() {
+    if (!currentRoute) return;
+    
+    const routingMode = document.getElementById('routingMode').value;
+    const routedCoordinates = await applyRoutingWithCorrections(currentRoute, routingMode);
+    
+    if (routedCoordinates) {
+        if (currentRoute.polyline) {
+            map.removeLayer(currentRoute.polyline);
+        }
+        
+        currentRoute.polyline = L.polyline(routedCoordinates, {
+            color: currentRoute.color,
+            weight: 4,
+            opacity: 0.7
+        }).addTo(map);
+        
+        currentRoute.routedCoordinates = routedCoordinates;
+        alert('Routing aplicado con puntos de corrección');
+    } else {
+        alert('No se pudo aplicar el routing con los puntos de corrección');
     }
 }
 
 // Apply routing to selected route in edit mode
 async function applyRoutingToSelectedRoute() {
-    const selectedRouteIndex = document.getElementById('routeSelector').value;
-    if (selectedRouteIndex === '') {
-        alert('Por favor, selecciona una ruta para aplicar routing');
-        return;
-    }
+    if (editingRoute === null) return;
     
-    const routeIndex = parseInt(selectedRouteIndex);
-    const route = routes[routeIndex];
+    const route = routes[editingRoute];
+    const routingMode = document.getElementById('editRoutingMode').value;
+    const routedCoordinates = await applyRoutingWithCorrections(route, routingMode);
     
-    if (!route || route.ruta.length < 2) {
-        alert('La ruta debe tener al menos 2 estaciones para aplicar routing');
-        return;
-    }
-    
-    try {
-        const applyBtn = document.getElementById('applyEditRouting');
-        applyBtn.disabled = true;
-        applyBtn.textContent = 'Aplicando Routing...';
-        
-        const editRoutingMode = document.getElementById('editRoutingMode').value;
-        const routedCoordinates = await getRoutedPathOSRM(route.ruta, editRoutingMode);
-        
-        if (routedCoordinates && routedCoordinates.length > 0) {
-            // Store routed coordinates in the route
-            routes[routeIndex].routedCoordinates = routedCoordinates;
-            
-            // Refresh the display
-            displayAllRoutes();
-            updateJsonOutput();
-            
-            alert(`Routing aplicado exitosamente a "${route.linea}"`);
-        } else {
-            alert('No se pudo generar la ruta. Manteniendo ruta original.');
+    if (routedCoordinates) {
+        if (route.polyline) {
+            map.removeLayer(route.polyline);
         }
-    } catch (error) {
-        console.error('Error applying routing to selected route:', error);
-        alert('Error al aplicar routing: ' + error.message);
-    } finally {
-        const applyBtn = document.getElementById('applyEditRouting');
-        applyBtn.disabled = false;
-        applyBtn.textContent = 'Aplicar Routing a Ruta';
+        
+        route.polyline = L.polyline(routedCoordinates, {
+            color: route.color,
+            weight: 4,
+            opacity: 0.7
+        }).addTo(map);
+        
+        route.routedCoordinates = routedCoordinates;
+        alert(`Routing aplicado con puntos de corrección a "${route.linea}"`);
+    } else {
+        alert('No se pudo aplicar el routing con los puntos de corrección');
     }
 }
 
@@ -259,42 +315,11 @@ function startNewRoute() {
     updateRouteInfo();
 }
 
-// Add a point to the current route
-function addPointToRoute(latlng) {
-    const stationName = prompt('Nombre de la estación:');
-    if (!stationName) return;
-    
-    const point = {
-        nombre: stationName,
-        lat: parseFloat(latlng.lat.toFixed(7)),
-        lng: parseFloat(latlng.lng.toFixed(7))
-    };
-    
-    currentRoute.ruta.push(point);
-    
-    // Create marker
-    const marker = L.marker([latlng.lat, latlng.lng], {
-        icon: L.divIcon({
-            className: 'point-marker',
-            html: `<div style="
-                background-color: ${currentRoute.color}; 
-                border: 2px solid white;
-                border-radius: 50%;
-                width: 12px;
-                height: 12px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            "></div>`,
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
-        })
-    }).addTo(map);
-    
-    marker.bindPopup(`<strong>${stationName}</strong><br>Línea: ${currentRoute.linea}`);
-    currentRoute.markers.push(marker);
-    
-    // Update or create polyline
-    updateRoutePolyline();
-    updateRouteInfo();
+// Toggle operation mode
+function toggleOperationMode(mode) {
+    operationMode = mode; // 'station' o 'correction'
+    const modeDisplay = document.getElementById('operationModeDisplay');
+    modeDisplay.textContent = mode === 'station' ? 'Agregar Estaciones' : 'Agregar Puntos de Corrección';
 }
 
 // Update the route polyline
@@ -336,7 +361,9 @@ function finishCurrentRoute() {
     const routeData = {
         linea: currentRoute.linea,
         color: currentRoute.color,
-        ruta: [...currentRoute.ruta]
+        ruta: [...currentRoute.ruta],
+        correctionPoints: [...correctionPoints], // Save correction points
+        circular: document.getElementById('isCircular').checked // Save circular flag
     };
     
     // Include routed coordinates if available
@@ -348,6 +375,7 @@ function finishCurrentRoute() {
     
     // Reset current route
     currentRoute = null;
+    correctionPoints = [];
     isCreatingRoute = false;
     
     updateUI();
@@ -357,24 +385,28 @@ function finishCurrentRoute() {
     // Clear form
     document.getElementById('lineName').value = '';
     document.getElementById('lineColor').value = '#3b82f6';
+    document.getElementById('isCircular').checked = false;
 }
 
 // Clear all routes
 function clearAllRoutes() {
-    if (routes.length > 0 && !confirm('¿Estás seguro de que quieres eliminar todas las rutas?')) {
+    if (!confirm('¿Estás seguro de que quieres eliminar todas las rutas y puntos de corrección?')) {
         return;
     }
     
     // Remove all layers from map
     map.eachLayer(function(layer) {
-        if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+        if (layer instanceof L.Marker || layer instanceof L.Polyline || layer instanceof L.CircleMarker) {
             map.removeLayer(layer);
         }
     });
     
     routes = [];
     currentRoute = null;
+    correctionPoints = [];
     isCreatingRoute = false;
+    editMode = false;
+    editingRoute = null;
     
     updateUI();
     updateRouteInfo();
@@ -451,6 +483,47 @@ function displayAllRoutes() {
 // Update edit routing mode
 function updateEditRoutingMode() {
     // This can be used if needed for different routing options
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    const startRouteBtn = document.getElementById('startRoute');
+    const finishRouteBtn = document.getElementById('finishRoute');
+    const clearAllBtn = document.getElementById('clearAll');
+    const copyJsonBtn = document.getElementById('copyJson');
+    const loadJsonBtn = document.getElementById('loadJson');
+    const loadFromFileBtn = document.getElementById('loadFromFile');
+    const fileInput = document.getElementById('fileInput');
+    const editRouteBtn = document.getElementById('editRoute');
+    const deleteRouteBtn = document.getElementById('deleteRoute');
+    const exitEditBtn = document.getElementById('exitEdit');
+    const useStreetRoutingCheckbox = document.getElementById('useStreetRouting');
+    const routingModeSelect = document.getElementById('routingMode');
+    const applyRoutingBtn = document.getElementById('applyRouting');
+    const applyEditRoutingBtn = document.getElementById('applyEditRouting');
+    const removeRoutingBtn = document.getElementById('removeRouting');
+    const editRoutingModeSelect = document.getElementById('editRoutingMode');
+    const toggleStationModeBtn = document.getElementById('toggleStationMode');
+    const toggleCorrectionModeBtn = document.getElementById('toggleCorrectionMode');
+    
+    startRouteBtn.addEventListener('click', startNewRoute);
+    finishRouteBtn.addEventListener('click', finishCurrentRoute);
+    clearAllBtn.addEventListener('click', clearAllRoutes);
+    copyJsonBtn.addEventListener('click', copyJsonToClipboard);
+    loadJsonBtn.addEventListener('click', loadFromJson);
+    loadFromFileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', loadFromFile);
+    editRouteBtn.addEventListener('click', startEditMode);
+    deleteRouteBtn.addEventListener('click', deleteSelectedRoute);
+    exitEditBtn.addEventListener('click', exitEditMode);
+    useStreetRoutingCheckbox.addEventListener('change', toggleStreetRouting);
+    routingModeSelect.addEventListener('change', updateRoutingMode);
+    applyRoutingBtn.addEventListener('click', applyRoutingToCurrentRoute);
+    applyEditRoutingBtn.addEventListener('click', applyRoutingToSelectedRoute);
+    removeRoutingBtn.addEventListener('click', removeRoutingFromSelectedRoute);
+    editRoutingModeSelect.addEventListener('change', updateEditRoutingMode);
+    toggleStationModeBtn.addEventListener('click', () => toggleOperationMode('station'));
+    toggleCorrectionModeBtn.addEventListener('click', () => toggleOperationMode('correction'));
 }
 
 // Update UI state
@@ -621,7 +694,7 @@ function updateStationCoordinates(routeIndex, pointIndex, newLatLng) {
 
 // Display a single route on map (modified for routing support)
 function displayRoute(route, routeIndex) {
-    const { linea, color, ruta } = route;
+    const { linea, color, ruta, correctionPoints = [], circular } = route;
     
     // Create polyline - use stored routing coordinates if available
     let latLngs;
@@ -632,6 +705,9 @@ function displayRoute(route, routeIndex) {
         isRouted = true;
     } else {
         latLngs = ruta.map(point => [point.lat, point.lng]);
+        if (circular) {
+            latLngs.push(latLngs[0]); // Close the route if circular
+        }
     }
     
     const polyline = L.polyline(latLngs, {
@@ -644,7 +720,21 @@ function displayRoute(route, routeIndex) {
     const routingStatus = isRouted ? ' (con routing)' : ' (línea directa)';
     polyline.bindPopup(`<strong>🚌 ${linea}</strong><br>Ruta del Transmetro${routingStatus}`);
     
-    // Create markers
+    // Create markers for correction points
+    correctionPoints.forEach(point => {
+        const marker = L.circleMarker([point.lat, point.lng], {
+            radius: 6,
+            fillColor: '#ff5722',
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map);
+        
+        marker.bindPopup('Punto de corrección');
+    });
+    
+    // Create markers for stations
     ruta.forEach((point, pointIndex) => {
         createStationMarker(point, route, routeIndex, pointIndex);
     });
