@@ -37,28 +37,23 @@ function setupEventListeners() {
 async function loadReportsData() {
     try {
         showLoadingState();
-        
-        // Check if config is available
-        if (typeof DATA_CONFIG === 'undefined') {
-            console.warn('Data config not found, using sample data');
-            loadSampleReportsData();
-            return;
-        }
-        
-        const response = await fetch(DATA_CONFIG.REPORTS_URL);
-        
+
+        // URL del Google Sheets publicado
+        const googleSheetsURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIKh_vys71-FBFCWFW3cSofAEjIhq9CncE2Brk_qzgcKXZ1XSjkYCET-J2YxM47IXbw5szIVz3v2as/pub?gid=47348234&single=true&output=csv';
+        const response = await fetch(googleSheetsURL);
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const csvText = await response.text();
         allReports = parseCSV(csvText);
-        
+
     } catch (error) {
         console.error('Error loading reports:', error);
         loadSampleReportsData();
     }
-    
+
     applyFilters();
     updateStats();
     hideLoadingState();
