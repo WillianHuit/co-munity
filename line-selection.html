@@ -275,6 +275,27 @@
                     <button id="deleteRoute" class="btn btn-danger">Eliminar Ruta</button>
                     <button id="exitEdit" class="btn" style="background-color: #6b7280; color: white;">Salir de Edición</button>
                 </div>
+                
+                <!-- Routing Controls for Edit Mode -->
+                <div id="editRoutingControls" class="routing-controls" style="display: none;">
+                    <h5>🛣️ Aplicar Routing a Ruta Seleccionada</h5>
+                    <div class="routing-options">
+                        <div class="input-group">
+                            <label for="editRoutingMode">Modo de transporte:</label>
+                            <select id="editRoutingMode">
+                                <option value="driving">Automóvil</option>
+                                <option value="walking">Caminando</option>
+                                <option value="cycling">Bicicleta</option>
+                            </select>
+                        </div>
+                        <button id="applyEditRouting" class="btn btn-success">Aplicar Routing a Ruta</button>
+                        <button id="removeRouting" class="btn btn-danger">Quitar Routing</button>
+                    </div>
+                    <p class="info-text">
+                        Aplica routing a la ruta seleccionada para que siga las calles reales.
+                    </p>
+                </div>
+                
                 <div class="route-info">
                     <p><strong>Instrucciones:</strong> Arrastra las estaciones para reposicionarlas. Haz clic derecho en una estación para eliminarla.</p>
                 </div>

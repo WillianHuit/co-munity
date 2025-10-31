@@ -53,6 +53,9 @@ function setupEventListeners() {
     const useStreetRoutingCheckbox = document.getElementById('useStreetRouting');
     const routingModeSelect = document.getElementById('routingMode');
     const applyRoutingBtn = document.getElementById('applyRouting');
+    const applyEditRoutingBtn = document.getElementById('applyEditRouting');
+    const removeRoutingBtn = document.getElementById('removeRouting');
+    const editRoutingModeSelect = document.getElementById('editRoutingMode');
     
     startRouteBtn.addEventListener('click', startNewRoute);
     finishRouteBtn.addEventListener('click', finishCurrentRoute);
@@ -67,6 +70,9 @@ function setupEventListeners() {
     useStreetRoutingCheckbox.addEventListener('change', toggleStreetRouting);
     routingModeSelect.addEventListener('change', updateRoutingMode);
     applyRoutingBtn.addEventListener('click', applyRoutingToCurrentRoute);
+    applyEditRoutingBtn.addEventListener('click', applyRoutingToSelectedRoute);
+    removeRoutingBtn.addEventListener('click', removeRoutingFromSelectedRoute);
+    editRoutingModeSelect.addEventListener('change', updateEditRoutingMode);
 }
 
 // Toggle street routing
@@ -119,15 +125,89 @@ async function applyRoutingToCurrentRoute() {
     }
 }
 
+// Apply routing to selected route in edit mode
+async function applyRoutingToSelectedRoute() {
+    const selectedRouteIndex = document.getElementById('routeSelector').value;
+    if (selectedRouteIndex === '') {
+        alert('Por favor, selecciona una ruta para aplicar routing');
+        return;
+    }
+    
+    const routeIndex = parseInt(selectedRouteIndex);
+    const route = routes[routeIndex];
+    
+    if (!route || route.ruta.length < 2) {
+        alert('La ruta debe tener al menos 2 estaciones para aplicar routing');
+        return;
+    }
+    
+    try {
+        const applyBtn = document.getElementById('applyEditRouting');
+        applyBtn.disabled = true;
+        applyBtn.textContent = 'Aplicando Routing...';
+        
+        const editRoutingMode = document.getElementById('editRoutingMode').value;
+        const routedCoordinates = await getRoutedPathOSRM(route.ruta, editRoutingMode);
+        
+        if (routedCoordinates && routedCoordinates.length > 0) {
+            // Store routed coordinates in the route
+            routes[routeIndex].routedCoordinates = routedCoordinates;
+            
+            // Refresh the display
+            displayAllRoutes();
+            updateJsonOutput();
+            
+            alert(`Routing aplicado exitosamente a "${route.linea}"`);
+        } else {
+            alert('No se pudo generar la ruta. Manteniendo ruta original.');
+        }
+    } catch (error) {
+        console.error('Error applying routing to selected route:', error);
+        alert('Error al aplicar routing: ' + error.message);
+    } finally {
+        const applyBtn = document.getElementById('applyEditRouting');
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Aplicar Routing a Ruta';
+    }
+}
+
+// Remove routing from selected route
+function removeRoutingFromSelectedRoute() {
+    const selectedRouteIndex = document.getElementById('routeSelector').value;
+    if (selectedRouteIndex === '') {
+        alert('Por favor, selecciona una ruta');
+        return;
+    }
+    
+    const routeIndex = parseInt(selectedRouteIndex);
+    const route = routes[routeIndex];
+    
+    if (!route) return;
+    
+    if (confirm(`¿Quitar el routing de "${route.linea}" y usar línea directa?`)) {
+        // Remove routed coordinates
+        delete routes[routeIndex].routedCoordinates;
+        
+        // Refresh display
+        displayAllRoutes();
+        updateJsonOutput();
+        
+        alert(`Routing removido de "${route.linea}"`);
+    }
+}
+
 // Get routed path using OSRM (free, no API key required)
-async function getRoutedPathOSRM(stations) {
+async function getRoutedPathOSRM(stations, mode = 'driving') {
     if (stations.length < 2) return null;
     
     try {
+        // Map routing modes to OSRM profiles
+        const osrmProfile = mode === 'walking' ? 'foot' : mode === 'cycling' ? 'bicycle' : 'driving';
+        
         // Construir coordenadas para OSRM
         const coordinates = stations.map(station => `${station.lng},${station.lat}`).join(';');
         
-        const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordinates}?geometries=geojson&overview=full`);
+        const response = await fetch(`https://router.project-osrm.org/route/v1/${osrmProfile}/${coordinates}?geometries=geojson&overview=full`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -368,159 +448,9 @@ function displayAllRoutes() {
     });
 }
 
-// Display a single route on map (modified for routing support)
-function displayRoute(route, routeIndex) {
-    const { linea, color, ruta } = route;
-    
-    // Create polyline - use stored routing coordinates if available
-    let latLngs;
-    if (route.routedCoordinates) {
-        latLngs = route.routedCoordinates;
-    } else {
-        latLngs = ruta.map(point => [point.lat, point.lng]);
-    }
-    
-    const polyline = L.polyline(latLngs, {
-        color: color,
-        weight: 6,
-        opacity: 0.8
-    }).addTo(map);
-    
-    polyline.bindPopup(`<strong>🚌 ${linea}</strong><br>Ruta del Transmetro`);
-    
-    // Create markers
-    ruta.forEach((point, pointIndex) => {
-        createStationMarker(point, route, routeIndex, pointIndex);
-    });
-}
-
-// Create a station marker (draggable in edit mode)
-function createStationMarker(point, route, routeIndex, pointIndex) {
-    const marker = L.marker([point.lat, point.lng], {
-        icon: L.divIcon({
-            className: 'station-marker',
-            html: `<div style="
-                background-color: ${route.color}; 
-                border: 2px solid white;
-                border-radius: 50%;
-                width: 16px;
-                height: 16px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                cursor: ${editMode ? 'move' : 'pointer'};
-            "></div>`,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8]
-        }),
-        draggable: editMode
-    }).addTo(map);
-    
-    marker.bindPopup(`<strong>${point.nombre}</strong><br>Línea: ${route.linea}`);
-    
-    // Add context menu for deletion in edit mode
-    if (editMode) {
-        marker.on('contextmenu', function(e) {
-            if (confirm(`¿Eliminar la estación "${point.nombre}"?`)) {
-                deleteStation(routeIndex, pointIndex);
-            }
-        });
-        
-        // Update coordinates when dragged
-        marker.on('dragend', function(e) {
-            const newLatLng = e.target.getLatLng();
-            updateStationCoordinates(routeIndex, pointIndex, newLatLng);
-        });
-    }
-    
-    return marker;
-}
-
-// Update station coordinates after drag
-function updateStationCoordinates(routeIndex, pointIndex, newLatLng) {
-    routes[routeIndex].ruta[pointIndex].lat = parseFloat(newLatLng.lat.toFixed(7));
-    routes[routeIndex].ruta[pointIndex].lng = parseFloat(newLatLng.lng.toFixed(7));
-    
-    // Clear routed coordinates as they are no longer valid
-    delete routes[routeIndex].routedCoordinates;
-    
-    // Refresh the route display
-    displayAllRoutes();
-    updateJsonOutput();
-}
-
-// Delete a station
-function deleteStation(routeIndex, pointIndex) {
-    if (routes[routeIndex].ruta.length <= 2) {
-        alert('Una ruta debe tener al menos 2 estaciones');
-        return;
-    }
-    
-    routes[routeIndex].ruta.splice(pointIndex, 1);
-    
-    // Clear routed coordinates as they are no longer valid
-    delete routes[routeIndex].routedCoordinates;
-    
-    displayAllRoutes();
-    updateJsonOutput();
-}
-
-// Update route selector dropdown
-function updateRouteSelector() {
-    const selector = document.getElementById('routeSelector');
-    selector.innerHTML = '<option value="">Selecciona una ruta para editar</option>';
-    
-    routes.forEach((route, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = route.linea;
-        selector.appendChild(option);
-    });
-    
-    // Show/hide edit controls
-    const editControls = document.getElementById('editControls');
-    editControls.style.display = routes.length > 0 ? 'block' : 'none';
-}
-
-// Start edit mode
-function startEditMode() {
-    const selectedRouteIndex = document.getElementById('routeSelector').value;
-    if (selectedRouteIndex === '') {
-        alert('Por favor, selecciona una ruta para editar');
-        return;
-    }
-    
-    editMode = true;
-    editingRoute = parseInt(selectedRouteIndex);
-    
-    displayAllRoutes();
-    updateEditUI();
-}
-
-// Exit edit mode
-function exitEditMode() {
-    editMode = false;
-    editingRoute = null;
-    
-    displayAllRoutes();
-    updateEditUI();
-}
-
-// Delete selected route
-function deleteSelectedRoute() {
-    const selectedRouteIndex = document.getElementById('routeSelector').value;
-    if (selectedRouteIndex === '') {
-        alert('Por favor, selecciona una ruta para eliminar');
-        return;
-    }
-    
-    const routeName = routes[selectedRouteIndex].linea;
-    if (!confirm(`¿Eliminar la ruta "${routeName}"?`)) {
-        return;
-    }
-    
-    routes.splice(selectedRouteIndex, 1);
-    displayAllRoutes();
-    updateJsonOutput();
-    exitEditMode();
+// Update edit routing mode
+function updateEditRoutingMode() {
+    // This can be used if needed for different routing options
 }
 
 // Update UI state
@@ -594,4 +524,185 @@ function updateEditUI() {
         createControls.style.opacity = '1';
         createControls.style.pointerEvents = 'auto';
     }
+}
+
+// Start edit mode
+function startEditMode() {
+    const selectedRouteIndex = document.getElementById('routeSelector').value;
+    if (selectedRouteIndex === '') {
+        alert('Por favor, selecciona una ruta para editar');
+        return;
+    }
+    
+    editMode = true;
+    editingRoute = parseInt(selectedRouteIndex);
+    
+    // Show routing controls for edit mode
+    document.getElementById('editRoutingControls').style.display = 'block';
+    
+    displayAllRoutes();
+    updateEditUI();
+}
+
+// Exit edit mode
+function exitEditMode() {
+    editMode = false;
+    editingRoute = null;
+    
+    // Hide routing controls for edit mode
+    document.getElementById('editRoutingControls').style.display = 'none';
+    
+    displayAllRoutes();
+    updateEditUI();
+}
+
+// Delete selected route
+function deleteSelectedRoute() {
+    const selectedRouteIndex = document.getElementById('routeSelector').value;
+    if (selectedRouteIndex === '') {
+        alert('Por favor, selecciona una ruta para eliminar');
+        return;
+    }
+    
+    const routeName = routes[selectedRouteIndex].linea;
+    if (!confirm(`¿Eliminar la ruta "${routeName}"?`)) {
+        return;
+    }
+    
+    routes.splice(selectedRouteIndex, 1);
+    displayAllRoutes();
+    updateJsonOutput();
+    exitEditMode();
+}
+
+// Delete a station
+function deleteStation(routeIndex, pointIndex) {
+    if (routes[routeIndex].ruta.length <= 2) {
+        alert('Una ruta debe tener al menos 2 estaciones');
+        return;
+    }
+    
+    routes[routeIndex].ruta.splice(pointIndex, 1);
+    
+    // Clear routed coordinates as they are no longer valid
+    const hadRouting = routes[routeIndex].routedCoordinates !== undefined;
+    delete routes[routeIndex].routedCoordinates;
+    
+    displayAllRoutes();
+    updateJsonOutput();
+    
+    if (hadRouting) {
+        setTimeout(() => {
+            alert('Las coordenadas de routing se han eliminado debido a la eliminación de la estación. Aplica routing nuevamente si es necesario.');
+        }, 100);
+    }
+}
+
+// Update station coordinates after drag
+function updateStationCoordinates(routeIndex, pointIndex, newLatLng) {
+    routes[routeIndex].ruta[pointIndex].lat = parseFloat(newLatLng.lat.toFixed(7));
+    routes[routeIndex].ruta[pointIndex].lng = parseFloat(newLatLng.lng.toFixed(7));
+    
+    // Clear routed coordinates as they are no longer valid after moving stations
+    const hadRouting = routes[routeIndex].routedCoordinates !== undefined;
+    delete routes[routeIndex].routedCoordinates;
+    
+    // Refresh the route display
+    displayAllRoutes();
+    updateJsonOutput();
+    
+    // Show warning about routing being invalidated
+    if (hadRouting) {
+        setTimeout(() => {
+            alert('Las coordenadas de routing se han eliminado debido al cambio de posición de la estación. Aplica routing nuevamente si es necesario.');
+        }, 100);
+    }
+}
+
+// Display a single route on map (modified for routing support)
+function displayRoute(route, routeIndex) {
+    const { linea, color, ruta } = route;
+    
+    // Create polyline - use stored routing coordinates if available
+    let latLngs;
+    let isRouted = false;
+    
+    if (route.routedCoordinates && route.routedCoordinates.length > 0) {
+        latLngs = route.routedCoordinates;
+        isRouted = true;
+    } else {
+        latLngs = ruta.map(point => [point.lat, point.lng]);
+    }
+    
+    const polyline = L.polyline(latLngs, {
+        color: color,
+        weight: isRouted ? 6 : 4,
+        opacity: isRouted ? 0.9 : 0.8,
+        dashArray: isRouted ? null : '5, 5' // Solid line for routed, dashed for direct
+    }).addTo(map);
+    
+    const routingStatus = isRouted ? ' (con routing)' : ' (línea directa)';
+    polyline.bindPopup(`<strong>🚌 ${linea}</strong><br>Ruta del Transmetro${routingStatus}`);
+    
+    // Create markers
+    ruta.forEach((point, pointIndex) => {
+        createStationMarker(point, route, routeIndex, pointIndex);
+    });
+}
+
+// Create a station marker (draggable in edit mode)
+function createStationMarker(point, route, routeIndex, pointIndex) {
+    const marker = L.marker([point.lat, point.lng], {
+        icon: L.divIcon({
+            className: 'station-marker',
+            html: `<div style="
+                background-color: ${route.color}; 
+                border: 2px solid white;
+                border-radius: 50%;
+                width: 16px;
+                height: 16px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                cursor: ${editMode ? 'move' : 'pointer'};
+            "></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        }),
+        draggable: editMode
+    }).addTo(map);
+    
+    marker.bindPopup(`<strong>${point.nombre}</strong><br>Línea: ${route.linea}`);
+    
+    // Add context menu for deletion in edit mode
+    if (editMode) {
+        marker.on('contextmenu', function(e) {
+            if (confirm(`¿Eliminar la estación "${point.nombre}"?`)) {
+                deleteStation(routeIndex, pointIndex);
+            }
+        });
+        
+        // Update coordinates when dragged
+        marker.on('dragend', function(e) {
+            const newLatLng = e.target.getLatLng();
+            updateStationCoordinates(routeIndex, pointIndex, newLatLng);
+        });
+    }
+    
+    return marker;
+}
+
+// Update route selector dropdown
+function updateRouteSelector() {
+    const selector = document.getElementById('routeSelector');
+    selector.innerHTML = '<option value="">Selecciona una ruta para editar</option>';
+    
+    routes.forEach((route, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = route.linea;
+        selector.appendChild(option);
+    });
+    
+    // Show/hide edit controls
+    const editControls = document.getElementById('editControls');
+    editControls.style.display = routes.length > 0 ? 'block' : 'none';
 }
