@@ -11,11 +11,44 @@ const problemColors = {
     'default': '#6b7280'
 };
 
+// Context menu variables
+let contextMenu = null;
+let selectedCoordinates = null;
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     setupEventListeners();
     loadReports();
+    
+    // Initialize context menu
+    contextMenu = document.getElementById('contextMenu');
+    
+    // Map click handler for context menu
+    map.on('contextmenu', function(e) {
+        selectedCoordinates = e.latlng;
+        showContextMenu(e.originalEvent.pageX, e.originalEvent.pageY);
+    });
+    
+    // Hide context menu on map click
+    map.on('click', function() {
+        hideContextMenu();
+    });
+    
+    // Context menu item click handler
+    document.getElementById('reportHere').addEventListener('click', function() {
+        if (selectedCoordinates) {
+            openReportModal(selectedCoordinates.lat, selectedCoordinates.lng);
+        }
+        hideContextMenu();
+    });
+    
+    // Hide context menu on outside click
+    document.addEventListener('click', function(e) {
+        if (!contextMenu.contains(e.target)) {
+            hideContextMenu();
+        }
+    });
 });
 
 // Initialize Leaflet map
@@ -240,6 +273,32 @@ function showError(message) {
 // Refresh reports data
 function refreshReports() {
     loadReports();
+}
+
+// Show context menu at coordinates
+function showContextMenu(x, y) {
+    contextMenu.style.display = 'block';
+    contextMenu.style.left = x + 'px';
+    contextMenu.style.top = y + 'px';
+}
+
+// Hide context menu
+function hideContextMenu() {
+    contextMenu.style.display = 'none';
+}
+
+// Open report modal with coordinates
+function openReportModal(lat, lng) {
+    const modal = document.getElementById('reportModal');
+    const iframe = document.getElementById('googleFormIframe');
+    
+    // ID del campo de coordenadas en tu Google Form
+    const baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeEQmd2sQPQN1YtkoTdk7uLa78nHe2Uhxjk3UTWj1tKLGBPhw/viewform';
+    const coordinatesValue = `${lat},${lng}`;
+    const urlWithCoords = `${baseUrl}?usp=dialog&embedded=true&entry.489043979=${coordinatesValue}`;
+    
+    iframe.src = urlWithCoords;
+    modal.style.display = 'flex';
 }
 
 // Export functions for potential external use

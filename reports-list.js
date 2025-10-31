@@ -89,66 +89,7 @@ function parseCSV(csvText) {
 // Load sample data for demonstration
 function loadSampleReportsData() {
     allReports = [
-        {
-            id: '1',
-            nombre: 'Juan Pérez',
-            tipo: 'Bache',
-            descripcion: 'Bache grande en la calzada principal que afecta el tráfico vehicular',
-            lat: '14.6349',
-            lng: '-90.5069',
-            fecha: '2024-01-15',
-            estado: 'Pendiente',
-            foto: '',
-            direccion: 'Calzada Roosevelt, Zona 11'
-        },
-        {
-            id: '2',
-            nombre: 'María González',
-            tipo: 'Fuga de agua',
-            descripcion: 'Fuga en tubería principal causa inundación en la acera',
-            lat: '14.6280',
-            lng: '-90.5150',
-            fecha: '2024-01-14',
-            estado: 'En proceso',
-            foto: '',
-            direccion: '6ta Avenida, Zona 1'
-        },
-        {
-            id: '3',
-            nombre: 'Carlos López',
-            tipo: 'Alumbrado público',
-            descripcion: 'Poste de luz fundido desde hace una semana, zona muy oscura por las noches',
-            lat: '14.6400',
-            lng: '-90.5100',
-            fecha: '2024-01-13',
-            estado: 'Reportado',
-            foto: '',
-            direccion: '12 Calle, Zona 10'
-        },
-        {
-            id: '4',
-            nombre: 'Ana Martínez',
-            tipo: 'Basura',
-            descripcion: 'Acumulación de basura en esquina que atrae plagas',
-            lat: '14.6320',
-            lng: '-90.5200',
-            fecha: '2024-01-12',
-            estado: 'Resuelto',
-            foto: '',
-            direccion: '4ta Calle, Zona 12'
-        },
-        {
-            id: '5',
-            nombre: 'Roberto Silva',
-            tipo: 'Alcantarilla',
-            descripcion: 'Tapa de alcantarilla rota, peligro para peatones y vehículos',
-            lat: '14.6380',
-            lng: '-90.5080',
-            fecha: '2024-01-11',
-            estado: 'Pendiente',
-            foto: '',
-            direccion: 'Avenida Reforma, Zona 9'
-        }
+        
     ];
     
     // Add calculated fields
