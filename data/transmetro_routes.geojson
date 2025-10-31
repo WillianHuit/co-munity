@@ -11,7 +11,7 @@
   },
   {
     "linea": "Línea 2",
-    "color": "#7E57C2",
+    "color": "#D1C4E9",
     "ruta": [
       {"nombre": "San Sebastián", "lat": 14.639, "lng": -90.553},
       {"nombre": "Hipódromo del Norte", "lat": 14.650, "lng": -90.505}
@@ -19,16 +19,18 @@
   },
   {
     "linea": "Línea 6",
-    "color": "#FFB300",
+    "color": "#FFEB3B",
     "ruta": [
-      {"nombre": "San Martín", "lat": 14.670, "lng": -90.503},
-      {"nombre": "Parque Colón", "lat": 14.643, "lng": -90.517},
-      {"nombre": "Cerro del Carmen", "lat": 14.651, "lng": -90.511}
+      {"nombre": "Proyectos", "lat": 14.6729761, "lng": -90.4876146},
+      {"nombre": "Proyectos 4-4", "lat": 14.6673902, "lng": -90.4919379},
+      {"nombre": "Estación Cipresales", "lat": 14.6654486, "lng": -90.4938244},
+      {"nombre": "Estación Academia", "lat": 14.6590684, "lng": -90.4937445},
+      {"nombre": "Estación Transmetro Fegua", "lat": 14.6305477, "lng": -90.5128913}
     ]
   },
   {
     "linea": "Línea 5",
-    "color": "#29B6F6",
+    "color": "#9575CD",
     "ruta": [
       {"nombre": "Atlantida", "lat": 14.691, "lng": -90.500},
       {"nombre": "Parque Colón", "lat": 14.643, "lng": -90.517}
@@ -36,7 +38,7 @@
   },
   {
     "linea": "Línea 12",
-    "color": "#F4511E",
+    "color": "#FF9800",
     "ruta": [
       {"nombre": "El Trébol", "lat": 14.610, "lng": -90.551},
       {"nombre": "Plaza Municipal", "lat": 14.622, "lng": -90.532},
@@ -45,7 +47,7 @@
   },
   {
     "linea": "Línea 18",
-    "color": "#43A047",
+    "color": "#03A9F4",
     "ruta": [
       {"nombre": "Parque Colón", "lat": 14.643, "lng": -90.517},
       {"nombre": "La Merced", "lat": 14.647, "lng": -90.515},

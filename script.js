@@ -1,14 +1,15 @@
 // Map instance
 let map;
 let markersLayer;
+let transmetroLayer;
 
-// Problem type colors matching CSS
+// Problem type colors matching CSS - cambiados para diferenciar del Transmetro
 const problemColors = {
-    'Bache': '#ef4444',
-    'Fuga de agua': '#3b82f6', 
-    'Alumbrado público': '#f59e0b',
-    'Basura': '#8b5cf6',
-    'default': '#6b7280'
+    'Bache': '#dc2626',        // Rojo más oscuro
+    'Fuga de agua': '#1d4ed8', // Azul más oscuro
+    'Alumbrado público': '#d97706', // Naranja más oscuro
+    'Basura': '#7c3aed',       // Púrpura más oscuro
+    'default': '#4b5563'       // Gris más oscuro
 };
 
 // Context menu variables
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     setupEventListeners();
     loadReports();
+    loadTransmetroRoutes();
     
     // Initialize context menu
     contextMenu = document.getElementById('contextMenu');
@@ -62,8 +64,9 @@ function initializeMap() {
         maxZoom: 19
     }).addTo(map);
     
-    // Create layer group for markers
+    // Create layer groups
     markersLayer = L.layerGroup().addTo(map);
+    transmetroLayer = L.layerGroup().addTo(map);
     
     // Add click event to map for future functionality
     map.on('click', function(e) {
@@ -177,15 +180,16 @@ function displayReports(reports) {
         
         if (isNaN(lat) || isNaN(lng)) return;
         
-        // Create custom marker
+        // Create custom marker with different style from Transmetro
         const color = problemColors[report.tipo] || problemColors.default;
         const marker = L.circleMarker([lat, lng], {
-            radius: 8,
+            radius: 10,
             fillColor: color,
             color: '#ffffff',
-            weight: 2,
+            weight: 3,
             opacity: 1,
-            fillOpacity: 0.8
+            fillOpacity: 0.9,
+            className: 'report-marker' // Clase CSS para diferenciar
         });
         
         // Create popup content
@@ -299,6 +303,85 @@ function openReportModal(lat, lng) {
     
     iframe.src = urlWithCoords;
     modal.style.display = 'flex';
+}
+
+// Load Transmetro routes from GeoJSON
+async function loadTransmetroRoutes() {
+    try {
+        console.log('Loading Transmetro routes...');
+        const response = await fetch('data/transmetro_routes.geojson');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const routes = await response.json();
+        console.log('Transmetro routes loaded:', routes);
+        displayTransmetroRoutes(routes);
+        
+    } catch (error) {
+        console.error('Error loading Transmetro routes:', error);
+        // Si falla, mostrar mensaje en consola pero no interrumpir la app
+        console.warn('Transmetro routes could not be loaded, continuing without them.');
+    }
+}
+
+// Display Transmetro routes on the map
+function displayTransmetroRoutes(routes) {
+    // Clear existing routes
+    transmetroLayer.clearLayers();
+    
+    routes.forEach(route => {
+        const { linea, color, ruta } = route;
+        
+        console.log(`Drawing route for ${linea} with ${ruta.length} stops`);
+
+        // Draw the route as a polyline
+        const latLngs = ruta.map(stop => [stop.lat, stop.lng]);
+        const polyline = L.polyline(latLngs, {
+            color: color,
+            weight: 6,
+            opacity: 0.7,
+            dashArray: '10, 5', // Línea discontinua para diferenciar
+            className: 'transmetro-line'
+        });
+
+        // Add popup to the line
+        polyline.bindPopup(`<strong>🚌 ${linea}</strong><br>Ruta del Transmetro`);
+        transmetroLayer.addLayer(polyline);
+
+        // Add markers for each stop with different style
+        ruta.forEach((stop, index) => {
+            const marker = L.marker([stop.lat, stop.lng], {
+                icon: L.divIcon({
+                    className: 'transmetro-stop',
+                    html: `<div style="
+                        background-color: ${color}; 
+                        border: 2px solid white;
+                        border-radius: 50%;
+                        width: 16px;
+                        height: 16px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    "></div>`,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                })
+            });
+
+            // Add popup with stop information
+            marker.bindPopup(`
+                <div class="transmetro-popup">
+                    <h4>🚌 ${stop.nombre}</h4>
+                    <p><strong>Línea:</strong> ${linea}</p>
+                    <p><strong>Parada:</strong> ${index + 1} de ${ruta.length}</p>
+                </div>
+            `);
+            
+            transmetroLayer.addLayer(marker);
+        });
+    });
+    
+    console.log('Transmetro routes displayed on map');
 }
 
 // Export functions for potential external use
