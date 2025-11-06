@@ -323,27 +323,28 @@ function showReportDetail(report) {
     content.innerHTML = `
         <div class="report-detail">
             <div class="detail-header">
-                <h4>${report.tipo}</h4>
+                <span class="report-type-icon">🚧</span>
+                <h3>${report.tipo}</h3>
             </div>
             <div class="detail-info">
                 <div class="info-row">
-                    <strong>Reportado por:</strong>
-                    <span>${report.nombre || 'Anónimo'}</span>
+                    <div class="info-label">Reportado por</div>
+                    <div class="info-value">${report.nombre || 'Anónimo'}</div>
                 </div>
                 <div class="info-row">
-                    <strong>Descripción:</strong>
-                    <span>${report.descripcion || 'Sin descripción'}</span>
+                    <div class="info-label">Descripción</div>
+                    <div class="info-value">${report.descripcion || 'Sin descripción'}</div>
                 </div>
                 <div class="info-row">
-                    <strong>Dirección:</strong>
-                    <span>${report.direccion || 'No disponible'}</span>
+                    <div class="info-label">Dirección</div>
+                    <div class="info-value">${report.direccion || 'No disponible'}</div>
                 </div>
                 <div class="info-row">
-                    <strong>Fecha:</strong>
-                    <span>${formatDate(report.fecha)} (${report.daysSinceReport} días)</span>
+                    <div class="info-label">Fecha</div>
+                    <div class="info-value">${formatDate(report.fecha)} <span class="days-ago">(Hace ${report.daysSinceReport} días)</span></div>
                 </div>
                 <div class="info-row">
-                    <strong>Ubicación:</strong>
+                    <div class="info-label">Ubicación</div>
                     <span>${report.direccion || 'Coordenadas: ' + report.lat + ', ' + report.lng}</span>
                 </div>
                 <div class="info-row">

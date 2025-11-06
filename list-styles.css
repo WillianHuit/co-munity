@@ -98,55 +98,129 @@
     box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
 }
 
-/* Reports Detail Modal */
+/* Report Modal Styles */
+.report-modal {
+    max-width: 600px !important;
+    margin: 2rem auto !important;
+    border-radius: 16px !important;
+    overflow: hidden;
+}
+
+.report-modal .modal-header {
+    padding: 1rem;
+    border-bottom: none;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.report-modal .close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.report-modal .close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.report-modal .modal-body {
+    padding: 0;
+}
+
+.report-modal .modal-footer {
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Report Detail Styles */
 .report-detail {
     background: white;
-    border-radius: 12px;
-    overflow: hidden;
 }
 
 .detail-header {
     background: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
     color: white;
-    padding: 1.25rem;
+    padding: 2rem;
     position: relative;
+    text-align: center;
 }
 
-.detail-header h4 {
+.report-type-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.detail-header h3 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     font-weight: 600;
 }
 
 .detail-info {
-    padding: 1.25rem;
+    padding: 2rem;
 }
 
 .info-row {
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1rem;
 }
 
 .info-row:last-child {
     margin-bottom: 0;
-    border-bottom: none;
-    padding-bottom: 0;
 }
 
-.info-row strong {
-    display: block;
-    color: #6b7280;
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
+.info-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.info-row span {
+.info-value {
     color: var(--text-dark);
     font-size: 1rem;
     line-height: 1.5;
-    display: block;
     word-wrap: break-word;
+}
+
+.days-ago {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-left: 0.5rem;
+}
+
+/* Modal Buttons */
+.report-modal .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.report-modal .btn-secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.report-modal .btn-secondary:hover {
+    background-color: #e2e8f0;
+    transform: translateY(-1px);
 }
 
 /* Stats Cards */
