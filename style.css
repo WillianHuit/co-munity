@@ -236,8 +236,8 @@ body {
     background-color: var(--white);
     margin: 2% auto;
     border-radius: 12px;
-    width: 95%;
-    max-width: 1000px;
+    width: 90%;
+    max-width: 800px;
     max-height: 95vh;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
