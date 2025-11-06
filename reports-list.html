@@ -7,13 +7,23 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="list-styles.css">
+    <meta name="author" content="Willian Huit">
 </head>
 <body>
     <header class="header">
         <div class="container">
-            <h1 class="logo">Co-Munity</h1>
-            <p class="tagline">Lista de Reportes para Gestión</p>
-            <nav class="header-nav">
+            <div class="header-top">
+                <div class="header-text">
+                    <h1 class="logo">Co-Munity</h1>
+                    <p class="tagline">Lista de Reportes para Gestión</p>
+                </div>
+                <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <nav class="header-nav" id="headerNav">
                 <a href="index.html" class="nav-link">Ver Mapa</a>
                 <a href="reports-list.html" class="nav-link active">Lista de Reportes</a>
                 <a href="about.html" class="nav-link">Acerca de</a>
@@ -115,7 +125,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 Co-Munity. Mejorando nuestras comunidades juntos.</p>
+            <p>&copy; 2025 Co-Munity. Mejorando nuestras comunidades juntos. | Desarrollado por Willian Huit</p>
         </div>
     </footer>
 
