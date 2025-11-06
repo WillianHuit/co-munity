@@ -89,6 +89,15 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeMap() {
     // Center on Guatemala City
     map = L.map('map').setView([14.6349, -90.5069], 12);
+    // Limitar el área navegable a Guatemala
+    var guatemalaBounds = L.latLngBounds([
+        [13.7300, -92.2462], // Suroeste
+        [18.0000, -88.2000]  // Noreste
+    ]);
+    map.setMaxBounds(guatemalaBounds);
+    map.on('drag', function() {
+        map.panInsideBounds(guatemalaBounds, { animate: false });
+    });
     
     // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
