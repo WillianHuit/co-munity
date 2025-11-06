@@ -354,15 +354,11 @@ function showReportDetail(report) {
                     </span>
                 </div>
             </div>
-            <div class="detail-description">
-                <h5>Descripción:</h5>
-                <p>${report.descripcion}</p>
-            </div>
             <div class="detail-actions">
                 <button class="btn btn-primary" onclick="viewOnMap('${report.lat}', '${report.lng}')">
                     📍 Ver en Mapa
                 </button>
-                <button class="btn btn-secondary" onclick="copyLocation('${report.lat}', '${report.lng}')">
+                <button class="btn btn-success" onclick="copyLocation('${report.lat}', '${report.lng}')">
                     📋 Copiar Ubicación
                 </button>
             </div>
