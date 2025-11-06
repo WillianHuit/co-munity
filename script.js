@@ -156,7 +156,7 @@ async function loadReports() {
         showLoading();
 
         // URL del Google Sheets publicado
-        const googleSheetsURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIKh_vys71-FBFCWFW3cSofAEjIhq9CncE2Brk_qzgcKXZ1XSjkYCET-J2YxM47IXbw5szIVz3v2as/pub?gid=47348234&single=true&output=csv';
+        const googleSheetsURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQsQgn3k99SeflscYBoGEMxOV-VfoG6KjeU11dHUse7n3BNloWofEbK5aYWeCO26RZFSD7x-M33fSTm/pub?gid=397731581&single=true&output=csv';
         const response = await fetch(googleSheetsURL);
 
         if (!response.ok) {
@@ -178,30 +178,56 @@ async function loadReports() {
 // Parse CSV data
 function parseCSV(csvText) {
     const lines = csvText.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
     const reports = [];
+
+    // Función auxiliar para procesar valores CSV con comillas
+    function parseCSVValues(line) {
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        for(let char of line) {
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        return values;
+    }
 
     for (let i = 1; i < lines.length; i++) {
         if (lines[i].trim()) {
-            const values = lines[i].split(',').map(v => v.trim());
-            const report = {};
+            const values = parseCSVValues(lines[i]);
+            
+            if (values.length >= 6) {
+                const report = {
+                    nombre: values[0].replace(/^"/, '').replace(/"$/, '') || 'Anónimo',
+                    tipo: values[1].replace(/^"/, '').replace(/"$/, '') || '',
+                    descripcion: values[2].replace(/^"/, '').replace(/"$/, '') || '',
+                    direccion: values[3].replace(/^"/, '').replace(/"$/, '') || '',
+                    coordenadas: values[4].replace(/^"/, '').replace(/"$/, '') || '',
+                    fecha: values[5].replace(/^"/, '').replace(/"$/, '') || ''
+                };
 
-            headers.forEach((header, index) => {
-                report[header] = values[index] || '';
-            });
+                // Extraer lat y lng de la columna coordenadas
+                const [lat, lng] = report.coordenadas.split(',').map(coord => parseFloat(coord.trim()));
 
-            // Validate required fields and coordinate ranges
-            const lat = parseFloat(report.lat);
-            const lng = parseFloat(report.lng);
-
-            if (
-                !isNaN(lat) && lat >= -90 && lat <= 90 &&
-                !isNaN(lng) && lng >= -180 && lng <= 180 &&
-                report.tipo
-            ) {
-                reports.push(report);
-            } else {
-                console.warn('Invalid report skipped:', report);
+                if (
+                    !isNaN(lat) && lat >= -90 && lat <= 90 &&
+                    !isNaN(lng) && lng >= -180 && lng <= 180 &&
+                    report.tipo
+                ) {
+                    report.lat = lat;
+                    report.lng = lng;
+                    reports.push(report);
+                } else {
+                    console.warn('Invalid report skipped:', report);
+                }
             }
         }
     }
@@ -215,8 +241,8 @@ function displayReports(reports) {
     markersLayer.clearLayers();
     
     reports.forEach(report => {
-        const lat = parseFloat(report.lat || report.latitud);
-        const lng = parseFloat(report.lng || report.longitud);
+        const lat = report.lat;
+        const lng = report.lng;
         
         if (isNaN(lat) || isNaN(lng)) return;
         
@@ -245,19 +271,28 @@ function displayReports(reports) {
 
 // Create popup content HTML
 function createPopupContent(report) {
-    const estado = report.estado || 'Pendiente';
-    const estadoClass = estado.toLowerCase().replace(/\s+/g, '-');
-    
     return `
         <div class="popup-content">
-            <h4 class="popup-title">${report.tipo || 'Problema urbano'}</h4>
+            <div class="popup-header">
+                <h4 class="popup-title">${report.tipo || 'Problema urbano'}</h4>
+            </div>
             <div class="popup-info">
-                <p><strong>Descripción:</strong> ${report.descripcion || 'Sin descripción'}</p>
-                <p><strong>Reportado por:</strong> ${report.nombre || 'Anónimo'}</p>
-                <p><strong>Fecha:</strong> ${formatDate(report.fecha)}</p>
-                <p><strong>Estado:</strong> 
-                    <span class="status status-${estadoClass}">${estado}</span>
-                </p>
+                <div class="info-row">
+                    <strong>Descripción:</strong>
+                    <p>${report.descripcion || 'Sin descripción'}</p>
+                </div>
+                <div class="info-row">
+                    <strong>Reportado por:</strong>
+                    <p>${report.nombre || 'Anónimo'}</p>
+                </div>
+                <div class="info-row">
+                    <strong>Dirección:</strong>
+                    <p>${report.direccion || 'No disponible'}</p>
+                </div>
+                <div class="info-row">
+                    <strong>Fecha:</strong>
+                    <p>${formatDate(report.fecha)}</p>
+                </div>
             </div>
         </div>
     `;

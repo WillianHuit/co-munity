@@ -40,7 +40,7 @@ async function loadReportsData() {
         showLoadingState();
 
         // URL del Google Sheets publicado
-        const googleSheetsURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIKh_vys71-FBFCWFW3cSofAEjIhq9CncE2Brk_qzgcKXZ1XSjkYCET-J2YxM47IXbw5szIVz3v2as/pub?gid=47348234&single=true&output=csv';
+        const googleSheetsURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQsQgn3k99SeflscYBoGEMxOV-VfoG6KjeU11dHUse7n3BNloWofEbK5aYWeCO26RZFSD7x-M33fSTm/pub?gid=397731581&single=true&output=csv';
         const response = await fetch(googleSheetsURL);
 
         if (!response.ok) {
@@ -60,26 +60,62 @@ async function loadReportsData() {
     hideLoadingState();
 }
 
-// Parse CSV data (reuse from main script)
+// Parse CSV data
 function parseCSV(csvText) {
     const lines = csvText.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
     const reports = [];
-    
+
+    // Función auxiliar para procesar valores CSV con comillas
+    function parseCSVValues(line) {
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        for(let char of line) {
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        return values;
+    }
+
     for (let i = 1; i < lines.length; i++) {
         if (lines[i].trim()) {
-            const values = lines[i].split(',').map(v => v.trim());
-            const report = {};
+            const values = parseCSVValues(lines[i]);
             
-            headers.forEach((header, index) => {
-                report[header] = values[index] || '';
-            });
-            
-            if (report.lat && report.lng && report.tipo) {
-                // Add calculated fields
-                report.priority = calculatePriority(report);
-                report.daysSinceReport = calculateDaysSince(report.fecha);
-                reports.push(report);
+            if (values.length >= 6) {
+                const report = {
+                    nombre: values[0].replace(/^"/, '').replace(/"$/, '') || 'Anónimo',
+                    tipo: values[1].replace(/^"/, '').replace(/"$/, '') || '',
+                    descripcion: values[2].replace(/^"/, '').replace(/"$/, '') || '',
+                    direccion: values[3].replace(/^"/, '').replace(/"$/, '') || '',
+                    coordenadas: values[4].replace(/^"/, '').replace(/"$/, '') || '',
+                    fecha: values[5].replace(/^"/, '').replace(/"$/, '') || ''
+                };
+
+                // Extraer lat y lng de la columna coordenadas
+                const [lat, lng] = report.coordenadas.split(',').map(coord => parseFloat(coord.trim()));
+
+                if (
+                    !isNaN(lat) && lat >= -90 && lat <= 90 &&
+                    !isNaN(lng) && lng >= -180 && lng <= 180 &&
+                    report.tipo
+                ) {
+                    report.lat = lat;
+                    report.lng = lng;
+                    // Add calculated fields
+                    report.priority = calculatePriority(report);
+                    report.daysSinceReport = calculateDaysSince(report.fecha);
+                    reports.push(report);
+                } else {
+                    console.warn('Invalid report skipped:', report);
+                }
             }
         }
     }
@@ -165,17 +201,14 @@ function applyFilters() {
     
     // Status filter
     const statusFilter = document.getElementById('statusFilter').value;
-    if (statusFilter) {
-        filtered = filtered.filter(report => report.estado === statusFilter);
-    }
-    
     // Search filter
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     if (searchTerm) {
         filtered = filtered.filter(report => 
             report.descripcion.toLowerCase().includes(searchTerm) ||
             report.nombre.toLowerCase().includes(searchTerm) ||
-            report.tipo.toLowerCase().includes(searchTerm)
+            report.tipo.toLowerCase().includes(searchTerm) ||
+            report.direccion.toLowerCase().includes(searchTerm)
         );
     }
     
@@ -242,9 +275,6 @@ function createReportCard(report) {
                     <span>${typeConfig.icon}</span>
                     ${report.tipo}
                 </div>
-                <div class="report-status" style="color: ${statusConfig.color}; background-color: ${statusConfig.bgColor}">
-                    ${report.estado}
-                </div>
             </div>
             <div class="report-info">
                 <div class="report-field">
@@ -290,21 +320,23 @@ function showReportDetail(report) {
     const modal = document.getElementById('reportDetailModal');
     const content = document.getElementById('reportDetailContent');
     
-    const statusConfig = DATA_CONFIG?.STATUS_TYPES?.[report.estado] || { color: '#6b7280', bgColor: '#f3f4f6' };
-    const typeConfig = DATA_CONFIG?.PROBLEM_TYPES?.[report.tipo] || { icon: '⚠️' };
-    
     content.innerHTML = `
         <div class="report-detail">
             <div class="detail-header">
-                <h4>${typeConfig.icon} ${report.tipo}</h4>
-                <div class="report-status" style="color: ${statusConfig.color}; background-color: ${statusConfig.bgColor}">
-                    ${report.estado}
-                </div>
+                <h4>${report.tipo}</h4>
             </div>
             <div class="detail-info">
                 <div class="info-row">
                     <strong>Reportado por:</strong>
                     <span>${report.nombre || 'Anónimo'}</span>
+                </div>
+                <div class="info-row">
+                    <strong>Descripción:</strong>
+                    <span>${report.descripcion || 'Sin descripción'}</span>
+                </div>
+                <div class="info-row">
+                    <strong>Dirección:</strong>
+                    <span>${report.direccion || 'No disponible'}</span>
                 </div>
                 <div class="info-row">
                     <strong>Fecha:</strong>
