@@ -337,9 +337,9 @@ function openReportModal(lat, lng) {
     const iframe = document.getElementById('googleFormIframe');
     
     // ID del campo de coordenadas en tu Google Form
-    const baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeEQmd2sQPQN1YtkoTdk7uLa78nHe2Uhxjk3UTWj1tKLGBPhw/viewform';
+    const baseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSd-koxDDBYzm842NyaGcu95S9Is4-DLlZ-wYQHEUbPZHuuc-w/viewform';
     const coordinatesValue = `${lat},${lng}`;
-    const urlWithCoords = `${baseUrl}?usp=dialog&embedded=true&entry.489043979=${coordinatesValue}`;
+    const urlWithCoords = `${baseUrl}?usp=pp_url&embedded=true&entry.489043979=${coordinatesValue}`;
     
     iframe.src = urlWithCoords;
     modal.style.display = 'flex';

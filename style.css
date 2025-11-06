@@ -236,9 +236,9 @@ body {
     background-color: var(--white);
     margin: 2% auto;
     border-radius: 12px;
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
+    width: 95%;
+    max-width: 1000px;
+    max-height: 95vh;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
@@ -277,14 +277,15 @@ body {
 }
 
 .modal-body {
-    max-height: calc(90vh - 100px);
-    overflow-y: auto;
+    height: calc(95vh - 80px);
+    overflow: hidden;
 }
 
 .modal-body iframe {
     width: 100%;
-    min-height: 600px;
+    height: 100%;
     border: none;
+    display: block;
 }
 
 /* Footer */
