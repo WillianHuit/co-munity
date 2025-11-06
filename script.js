@@ -141,6 +141,29 @@ function setupEventListeners() {
             closeModal();
         }
     });
+    
+    // Adding dynamic search functionality
+    const searchInput = document.getElementById('searchInput');
+
+    searchInput.addEventListener('input', function () {
+        const query = searchInput.value.toLowerCase();
+
+        // Assuming markersLayer contains all the markers on the map
+        const markers = markersLayer.getLayers();
+
+        const filteredMarkers = markers.filter(marker => {
+            const markerName = marker.options.title ? marker.options.title.toLowerCase() : '';
+            return markerName.includes(query);
+        });
+
+        console.log('Filtered Markers:', filteredMarkers);
+
+        // Center the map on the first filtered marker
+        if (filteredMarkers.length > 0) {
+            const firstMarker = filteredMarkers[0];
+            map.setView(firstMarker.getLatLng(), 15); // Center map on the first result
+        }
+    });
 }
 
 // Close modal function
