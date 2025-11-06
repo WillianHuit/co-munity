@@ -34,48 +34,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize context menu
     contextMenu = document.getElementById('contextMenu');
     
-    // Map right-click handler for desktop
+    // Handler unificado para mostrar el menú contextual (click derecho o presión larga ya manejada por Leaflet en algunos navegadores móviles)
     map.on('contextmenu', function(e) {
-        if (!isTouchDevice) {
-            selectedCoordinates = e.latlng;
-            // Usar containerPoint para evitar desajustes por scroll u offset del contenedor
-            const rect = map.getContainer().getBoundingClientRect();
-            const x = rect.left + e.containerPoint.x + window.scrollX;
-            const y = rect.top + e.containerPoint.y;
-            showContextMenu(x, y);
-        }
+        selectedCoordinates = e.latlng;
+        const rect = map.getContainer().getBoundingClientRect();
+        const x = rect.left + e.containerPoint.x + window.scrollX;
+        const y = rect.top + e.containerPoint.y + window.scrollY; // asegurar scroll vertical
+        showContextMenu(x, y);
     });
-    
-    // Touch events for mobile
-    if (isTouchDevice) {
-        map.on('mousedown', function(e) {
-            touchTimeout = setTimeout(function() {
-                selectedCoordinates = e.latlng;
-                const rect = map.getContainer().getBoundingClientRect();
-                const touch = e.originalEvent.touches && e.originalEvent.touches[0];
-                const rawX = (touch ? touch.clientX : e.originalEvent.clientX);
-                const rawY = (touch ? touch.clientY : e.originalEvent.clientY);
-                // Convertir a coordenadas absolutas en la página
-                const x = rect.left + (rawX - rect.left) + window.scrollX;
-                const y = rect.top + (rawY - rect.top) + window.scrollY;
-                showContextMenu(x, y);
-            }, 500); // 500ms long press
-        });
-        
-        map.on('mouseup', function() {
+
+    // Implementación simple opcional de long press táctil si el navegador no dispara contextmenu (algunos móviles):
+    map.on('touchstart', function(e) {
+        touchTimeout = setTimeout(function() {
+            // Verificar que no se haya cancelado
+            if (!touchTimeout) return;
+            selectedCoordinates = e.latlng;
+            const rect = map.getContainer().getBoundingClientRect();
+            const touch = e.originalEvent.touches && e.originalEvent.touches[0];
+            if (!touch) return;
+            const x = touch.clientX + window.scrollX;
+            const y = touch.clientY + window.scrollY;
+            showContextMenu(x, y);
+        }, 500);
+    });
+    ['touchend','touchmove','touchcancel'].forEach(ev => {
+        map.on(ev, function() {
             if (touchTimeout) {
                 clearTimeout(touchTimeout);
                 touchTimeout = null;
             }
         });
-        
-        map.on('mousemove', function() {
-            if (touchTimeout) {
-                clearTimeout(touchTimeout);
-                touchTimeout = null;
-            }
-        });
-    }
+    });
     
     // Hide context menu on map click
     map.on('click', function() {
