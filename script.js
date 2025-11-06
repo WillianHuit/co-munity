@@ -38,7 +38,11 @@ document.addEventListener('DOMContentLoaded', function() {
     map.on('contextmenu', function(e) {
         if (!isTouchDevice) {
             selectedCoordinates = e.latlng;
-            showContextMenu(e.originalEvent.pageX, e.originalEvent.pageY);
+            // Usar containerPoint para evitar desajustes por scroll u offset del contenedor
+            const rect = map.getContainer().getBoundingClientRect();
+            const x = rect.left + e.containerPoint.x + window.scrollX;
+            const y = rect.top + e.containerPoint.y;
+            showContextMenu(x, y);
         }
     });
     
@@ -47,8 +51,14 @@ document.addEventListener('DOMContentLoaded', function() {
         map.on('mousedown', function(e) {
             touchTimeout = setTimeout(function() {
                 selectedCoordinates = e.latlng;
-                showContextMenu(e.originalEvent.pageX || e.originalEvent.touches[0].pageX, 
-                              e.originalEvent.pageY || e.originalEvent.touches[0].pageY);
+                const rect = map.getContainer().getBoundingClientRect();
+                const touch = e.originalEvent.touches && e.originalEvent.touches[0];
+                const rawX = (touch ? touch.clientX : e.originalEvent.clientX);
+                const rawY = (touch ? touch.clientY : e.originalEvent.clientY);
+                // Convertir a coordenadas absolutas en la página
+                const x = rect.left + (rawX - rect.left) + window.scrollX;
+                const y = rect.top + (rawY - rect.top) + window.scrollY;
+                showContextMenu(x, y);
             }, 500); // 500ms long press
         });
         
@@ -379,9 +389,34 @@ function refreshReports() {
 
 // Show context menu at coordinates
 function showContextMenu(x, y) {
+    if (!contextMenu) return;
     contextMenu.style.display = 'block';
-    contextMenu.style.left = x + 'px';
-    contextMenu.style.top = y + 'px';
+    // Forzar cálculo de tamaño antes de posicionar definitivo
+    const menuWidth = contextMenu.offsetWidth || 160; // fallback aproximado
+    const menuHeight = contextMenu.offsetHeight || 60; // fallback aproximado
+    const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const margin = 8;
+
+    let finalX = x;
+    let finalY = y;
+
+    // Si el menú se saldría por la derecha, colócalo hacia la izquierda del cursor
+    if (finalX + menuWidth + margin > scrollX + viewportWidth) {
+        finalX = x - menuWidth - margin;
+    }
+    // Si se sale por abajo, muévelo hacia arriba
+    if (finalY + menuHeight + margin > scrollY + viewportHeight) {
+        finalY = y - menuHeight - margin;
+    }
+    // Clamp mínimo para evitar valores negativos
+    finalX = Math.max(scrollX + margin, finalX);
+    finalY = Math.max(scrollY + margin, finalY);
+
+    contextMenu.style.left = finalX + 'px';
+    contextMenu.style.top = finalY + 'px';
 }
 
 // Hide context menu
