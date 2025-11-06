@@ -269,35 +269,50 @@ function createReportCard(report) {
     
     return `
         <div class="report-card">
-            <div class="priority-indicator priority-${report.priority}"></div>
-            <div class="report-header">
-                <div class="report-type">
-                    <span>${typeConfig.icon}</span>
-                    ${report.tipo}
+            <div class="report-card-container">
+                <div class="report-card-header">
+                    <div class="report-card-title-section">
+                        <div class="report-card-icon">${typeConfig.icon}</div>
+                        <div class="report-card-title-content">
+                            <h3 class="report-card-title">${report.tipo}</h3>
+                            <span class="report-card-status priority-badge priority-badge-${report.priority}">
+                                ${report.priority === 'high' ? 'Alta Prioridad' : report.priority === 'medium' ? 'Prioridad Media' : 'Baja Prioridad'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="report-card-meta">
+                        <span class="report-card-date">${report.daysSinceReport} días</span>
+                    </div>
                 </div>
-            </div>
-            <div class="report-info">
-                <div class="report-field">
-                    <strong>Reportado por:</strong> ${report.nombre || 'Anónimo'}
+
+                <div class="report-card-body">
+                    <div class="report-card-grid">
+                        <div class="report-card-item">
+                            <label class="report-card-label">Reportado por</label>
+                            <p class="report-card-value">${report.nombre || 'Anónimo'}</p>
+                        </div>
+                        <div class="report-card-item">
+                            <label class="report-card-label">Fecha del reporte</label>
+                            <p class="report-card-value">${formatDate(report.fecha)}</p>
+                        </div>
+                        <div class="report-card-item full-width">
+                            <label class="report-card-label">Ubicación</label>
+                            <p class="report-card-value">${report.direccion || 'Ver en mapa'}</p>
+                        </div>
+                    </div>
+
+                    <div class="report-card-description-section">
+                        <label class="report-card-label">Descripción</label>
+                        <p class="report-card-description">${report.descripcion}</p>
+                    </div>
                 </div>
-                <div class="report-field">
-                    <strong>Fecha:</strong> ${formatDate(report.fecha)} (${report.daysSinceReport} días)
+
+                <div class="report-card-footer">
+                    <button class="btn btn-map-view" onclick="event.stopPropagation(); viewOnMap('${report.lat}', '${report.lng}')">
+                        <span class="btn-icon">📍</span>
+                        <span class="btn-text">Ver en Mapa</span>
+                    </button>
                 </div>
-                <div class="report-field">
-                    <strong>Ubicación:</strong> ${report.direccion || 'Ver en mapa'}
-                </div>
-                <div class="report-field">
-                    <strong>Prioridad:</strong> 
-                    <span class="priority-${report.priority}">
-                        ${report.priority === 'high' ? 'Alta' : report.priority === 'medium' ? 'Media' : 'Baja'}
-                    </span>
-                </div>
-            </div>
-            <div class="report-description">${report.descripcion}</div>
-            <div class="report-actions">
-                <button class="btn btn-secondary" onclick="event.stopPropagation(); viewOnMap('${report.lat}', '${report.lng}')">
-                    📍 Ver en Mapa
-                </button>
             </div>
         </div>
     `;
