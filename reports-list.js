@@ -152,13 +152,16 @@ function calculatePriority(report) {
 // Calculate days since report
 function calculateDaysSince(dateString) {
     if (!dateString) return 0;
-    
+
     try {
-        const reportDate = new Date(dateString);
+        // Parse the date using MM/DD/YYYY format
+        const [month, day, year] = dateString.split('/').map(Number);
+        const reportDate = new Date(year, month - 1, day);
         const today = new Date();
         const diffTime = Math.abs(today - reportDate);
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     } catch (error) {
+        console.error('Error parsing date:', error);
         return 0;
     }
 }
