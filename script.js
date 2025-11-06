@@ -143,7 +143,7 @@ function setupEventListeners() {
     });
     
     // Adding dynamic search functionality
-    const searchInput = document.getElementById('searchInput');
+    /*const searchInput = document.getElementById('searchInput');
 
     searchInput.addEventListener('input', function () {
         const query = searchInput.value.toLowerCase();
@@ -163,7 +163,7 @@ function setupEventListeners() {
             const firstMarker = filteredMarkers[0];
             map.setView(firstMarker.getLatLng(), 15); // Center map on the first result
         }
-    });
+    });*/
 }
 
 // Close modal function
