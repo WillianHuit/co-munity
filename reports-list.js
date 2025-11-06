@@ -154,8 +154,8 @@ function calculateDaysSince(dateString) {
     if (!dateString) return 0;
 
     try {
-        // Parse the date using MM/DD/YYYY format
-        const [month, day, year] = dateString.split('/').map(Number);
+        // Parse the date using DD/MM/YYYY format
+        const [day, month, year] = dateString.split('/').map(Number);
         const reportDate = new Date(year, month - 1, day);
         const today = new Date();
         const diffTime = Math.abs(today - reportDate);
@@ -324,11 +324,12 @@ function createReportCard(report) {
 // Format date helper
 function formatDate(dateString) {
     if (!dateString) return 'No disponible';
-    
+
     try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-GT');
+        const [year, month, day] = dateString.split('-').map(Number);
+        return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
     } catch (error) {
+        console.error('Error formatting date:', error);
         return dateString;
     }
 }
