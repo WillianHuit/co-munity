@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acerca de - Co-Munity</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="about.css">
+    <meta name="author" content="Willian Huit">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">Co-Munity</h1>
+            <p class="tagline">Reporta problemas urbanos en tu comunidad</p>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">Ver Mapa</a>
+                <a href="reports-list.html" class="nav-link">Lista de Reportes</a>
+                <a href="about.html" class="nav-link active">Acerca de</a>
+                <a href="contact.html" class="nav-link">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <section class="about-section">
+                <div class="about-header">
+                    <h2>Acerca de Co-Munity</h2>
+                    <p class="about-subtitle">Conectando ciudadanos para mejorar nuestras comunidades</p>
+                </div>
+
+                <div class="about-content">
+                    <div class="mission-card">
+                        <h3>🎯 Nuestra Misión</h3>
+                        <p>Co-Munity es una plataforma digital que permite a los ciudadanos reportar problemas urbanos de manera fácil y efectiva. Nuestro objetivo es crear un puente entre la comunidad y las autoridades para mejorar la calidad de vida en nuestras ciudades.</p>
+                    </div>
+
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">🗺️</div>
+                            <h4>Mapeo Interactivo</h4>
+                            <p>Visualiza todos los reportes en un mapa interactivo para identificar patrones y áreas problemáticas.</p>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-icon">📱</div>
+                            <h4>Fácil de Usar</h4>
+                            <p>Reporta problemas con un simple clic derecho en el mapa o mantén presionado en dispositivos móviles.</p>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-icon">👥</div>
+                            <h4>Participación Ciudadana</h4>
+                            <p>Fomenta la participación activa de la comunidad en la identificación y solución de problemas urbanos.</p>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-icon">📊</div>
+                            <h4>Seguimiento Transparente</h4>
+                            <p>Mantén un registro transparente del estado de cada reporte y su progreso hacia la resolución.</p>
+                        </div>
+                    </div>
+
+                    <div class="developer-section">
+                        <h3>👨‍💻 Sobre el Desarrollador</h3>
+                        <div class="developer-card">
+                            <div class="developer-info">
+                                <h4>Willian Huit</h4>
+                                <p class="developer-title">Desarrollador Full Stack</p>
+                                <p class="developer-description">
+                                    Apasionado por crear soluciones tecnológicas que generen un impacto positivo en la sociedad. 
+                                    Con experiencia en desarrollo web y aplicaciones móviles, busco utilizar la tecnología 
+                                    para resolver problemas reales y mejorar la calidad de vida de las personas.
+                                </p>
+                                <div class="developer-skills">
+                                    <span class="skill-tag">JavaScript</span>
+                                    <span class="skill-tag">HTML/CSS</span>
+                                    <span class="skill-tag">React</span>
+                                    <span class="skill-tag">Node.js</span>
+                                    <span class="skill-tag">Python</span>
+                                    <span class="skill-tag">MongoDB</span>
+                                </div>
+                                <div class="developer-links">
+                                    <a href="contact.html" class="contact-btn">Contactar</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="how-to-use">
+                        <h3>📖 Cómo Usar Co-Munity</h3>
+                        <div class="instructions-grid">
+                            <div class="instruction-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>💻 En Computadora</h4>
+                                    <p>Haz <strong>clic derecho</strong> en cualquier lugar del mapa donde veas un problema urbano y selecciona "Reportar Problema Aquí".</p>
+                                </div>
+                            </div>
+
+                            <div class="instruction-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>📱 En Móvil</h4>
+                                    <p><strong>Mantén presionado</strong> tu dedo en el lugar del mapa donde quieres reportar un problema hasta que aparezca el menú.</p>
+                                </div>
+                            </div>
+
+                            <div class="instruction-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>📝 Completar Formulario</h4>
+                                    <p>Llena el formulario con los detalles del problema. Incluye fotos si es posible para ayudar a las autoridades.</p>
+                                </div>
+                            </div>
+
+                            <div class="instruction-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h4>👀 Seguimiento</h4>
+                                    <p>Tu reporte aparecerá en el mapa y podrás seguir su estado en la lista de reportes.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="impact-section">
+                        <h3>🌟 Nuestro Impacto</h3>
+                        <div class="impact-stats">
+                            <div class="stat-card">
+                                <div class="stat-number" id="reportCount">0</div>
+                                <div class="stat-label">Reportes Recibidos</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="resolvedCount">0</div>
+                                <div class="stat-label">Problemas Resueltos</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="userCount">500+</div>
+                                <div class="stat-label">Usuarios Activos</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Co-Munity. Mejorando nuestras comunidades juntos. | Desarrollado por Willian Huit</p>
+        </div>
+    </footer>
+
+    <script src="about.js"></script>
+</body>
+</html>

@@ -15,22 +15,54 @@ const problemColors = {
 // Context menu variables
 let contextMenu = null;
 let selectedCoordinates = null;
+let touchTimeout = null;
+let isTouchDevice = false;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     setupEventListeners();
     loadReports();
-    loadTransmetroRoutes();
+    //loadTransmetroRoutes();
+    
+    // Detect touch device
+    isTouchDevice = 'ontouchstart' in window;
     
     // Initialize context menu
     contextMenu = document.getElementById('contextMenu');
     
-    // Map click handler for context menu
+    // Map right-click handler for desktop
     map.on('contextmenu', function(e) {
-        selectedCoordinates = e.latlng;
-        showContextMenu(e.originalEvent.pageX, e.originalEvent.pageY);
+        if (!isTouchDevice) {
+            selectedCoordinates = e.latlng;
+            showContextMenu(e.originalEvent.pageX, e.originalEvent.pageY);
+        }
     });
+    
+    // Touch events for mobile
+    if (isTouchDevice) {
+        map.on('mousedown', function(e) {
+            touchTimeout = setTimeout(function() {
+                selectedCoordinates = e.latlng;
+                showContextMenu(e.originalEvent.pageX || e.originalEvent.touches[0].pageX, 
+                              e.originalEvent.pageY || e.originalEvent.touches[0].pageY);
+            }, 500); // 500ms long press
+        });
+        
+        map.on('mouseup', function() {
+            if (touchTimeout) {
+                clearTimeout(touchTimeout);
+                touchTimeout = null;
+            }
+        });
+        
+        map.on('mousemove', function() {
+            if (touchTimeout) {
+                clearTimeout(touchTimeout);
+                touchTimeout = null;
+            }
+        });
+    }
     
     // Hide context menu on map click
     map.on('click', function() {
@@ -76,17 +108,13 @@ function initializeMap() {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Report button modal
-    const reportBtn = document.getElementById('reportBtn');
+    // Modal functionality
     const modal = document.getElementById('reportModal');
     const closeBtn = document.querySelector('.close-btn');
     
-    reportBtn.addEventListener('click', function() {
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    });
-    
-    closeBtn.addEventListener('click', closeModal);
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
     
     // Close modal when clicking outside
     window.addEventListener('click', function(e) {
@@ -97,7 +125,7 @@ function setupEventListeners() {
     
     // Close modal with Escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modal.style.display === 'block') {
+        if (e.key === 'Escape' && modal && modal.style.display === 'block') {
             closeModal();
         }
     });

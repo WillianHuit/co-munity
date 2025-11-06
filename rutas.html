@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Co-Munity - Reportes Ciudadanos</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+    <meta name="author" content="Tu Nombre">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">Co-Munity</h1>
+            <p class="tagline">Reporta problemas urbanos en tu comunidad</p>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">Ver Mapa</a>
+                <a href="reports-list.html" class="nav-link">Lista de Reportes</a>
+                <a href="about.html" class="nav-link">Acerca de</a>
+                <a href="contact.html" class="nav-link">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <section class="map-section">
+                <div class="map-header">
+                    <h2>Mapa de Reportes</h2>
+                    <div class="map-controls">
+                        <div class="legend">
+                            <div class="legend-item">
+                                <span class="legend-color bache"></span>
+                                <span>Baches</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="map"></div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Co-Munity. Mejorando nuestras comunidades juntos. | Desarrollado por Willian Huit</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="data/config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

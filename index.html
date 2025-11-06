@@ -16,6 +16,8 @@
             <nav class="header-nav">
                 <a href="index.html" class="nav-link active">Ver Mapa</a>
                 <a href="reports-list.html" class="nav-link">Lista de Reportes</a>
+                <a href="about.html" class="nav-link">Acerca de</a>
+                <a href="contact.html" class="nav-link">Contacto</a>
             </nav>
         </div>
     </header>
@@ -44,28 +46,25 @@
                                 <span>Basura</span>
                             </div>
                         </div>
-                        <div class="layer-controls">
-                            <label class="toggle-control">
-                                <input type="checkbox" id="toggleTransmetro" checked>
-                                <span>🚌 Mostrar Transmetro</span>
-                            </label>
-                            <label class="toggle-control">
-                                <input type="checkbox" id="toggleReports" checked>
-                                <span>📍 Mostrar Reportes</span>
-                            </label>
-                        </div>
                     </div>
                 </div>
+                
+                <!-- Instructions for reporting -->
+                <div class="reporting-instructions">
+                    <div class="instruction-desktop">
+                        <span class="instruction-icon">🖱️</span>
+                        <span>Haz <strong>clic derecho</strong> en el mapa para reportar un problema</span>
+                    </div>
+                    <div class="instruction-mobile">
+                        <span class="instruction-icon">👆</span>
+                        <span><strong>Mantén presionado</strong> en el mapa para reportar un problema</span>
+                    </div>
+                </div>
+                
                 <div id="map"></div>
             </section>
         </div>
     </main>
-
-    <!-- Floating Report Button -->
-    <button id="reportBtn" class="floating-btn">
-        <span class="btn-icon">📝</span>
-        <span class="btn-text">Reportar Problema</span>
-    </button>
 
     <!-- Context Menu for Map -->
     <div id="contextMenu" class="context-menu">

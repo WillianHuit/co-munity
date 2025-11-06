@@ -128,34 +128,46 @@ body {
     border: 2px solid #e5e7eb;
 }
 
-/* Floating Button */
-.floating-btn {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background: linear-gradient(135deg, var(--primary-green), #059669);
-    color: var(--white);
-    border: none;
-    border-radius: 50px;
-    padding: 1rem 1.5rem;
+/* Reporting Instructions */
+.reporting-instructions {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-blue);
+}
+
+.instruction-desktop,
+.instruction-mobile {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 8px 25px rgba(22, 163, 74, 0.3);
-    transition: all 0.3s ease;
-    z-index: 1000;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
 }
 
-.floating-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(22, 163, 74, 0.4);
+.instruction-mobile:last-child {
+    margin-bottom: 0;
 }
 
-.btn-icon {
+.instruction-icon {
     font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+
+/* Hide mobile instructions on desktop and vice versa */
+@media (min-width: 769px) {
+    .instruction-mobile {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .instruction-desktop {
+        display: none;
+    }
 }
 
 /* Modal */
@@ -245,6 +257,8 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: none;
     min-width: 200px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .context-menu ul {
@@ -259,10 +273,15 @@ body {
     font-size: 14px;
     color: #333;
     transition: background-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .context-menu li:hover {
     background-color: #f5f5f5;
+}
+
+.context-menu li:active {
+    background-color: #e5e7eb;
 }
 
 .context-menu li:first-child {
@@ -283,6 +302,16 @@ body {
         font-size: 1rem;
     }
 
+    .header-nav {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .nav-link {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
     .map-header {
         flex-direction: column;
         align-items: flex-start;
@@ -290,20 +319,23 @@ body {
 
     .legend {
         justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        font-size: 0.85rem;
     }
 
     #map {
         height: 400px;
     }
 
-    .floating-btn {
-        bottom: 1rem;
-        right: 1rem;
-        padding: 0.8rem 1.2rem;
+    .reporting-instructions {
+        padding: 0.8rem;
     }
 
-    .btn-text {
-        display: none;
+    .instruction-mobile {
+        font-size: 0.9rem;
     }
 
     .modal-content {
@@ -321,12 +353,131 @@ body {
         padding: 0 0.5rem;
     }
 
+    .header {
+        padding: 1.5rem 0;
+    }
+
+    .logo {
+        font-size: 1.8rem;
+    }
+
+    .tagline {
+        font-size: 0.9rem;
+    }
+
+    .header-nav {
+        gap: 0.3rem;
+        margin-top: 0.8rem;
+    }
+
+    .nav-link {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+        border-radius: 15px;
+    }
+
     .map-section {
         padding: 1rem;
     }
 
+    .map-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .legend {
+        gap: 0.5rem;
+    }
+
+    .legend-item {
+        font-size: 0.8rem;
+    }
+
+    .legend-color {
+        width: 14px;
+        height: 14px;
+    }
+
     #map {
         height: 350px;
+    }
+
+    .reporting-instructions {
+        padding: 0.6rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .instruction-mobile {
+        font-size: 0.85rem;
+    }
+
+    .context-menu {
+        min-width: 180px;
+    }
+
+    .context-menu li {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .modal-content {
+        width: 98%;
+        margin: 2% auto;
+        border-radius: 8px;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .modal-body iframe {
+        min-height: 450px;
+    }
+}
+
+/* Touch-specific improvements */
+@media (hover: none) and (pointer: coarse) {
+    .nav-link {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .context-menu li {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    .close-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+/* Prevent zoom on input focus on iOS */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    select,
+    textarea,
+    input[type="text"],
+    input[type="password"],
+    input[type="datetime"],
+    input[type="datetime-local"],
+    input[type="date"],
+    input[type="month"],
+    input[type="time"],
+    input[type="week"],
+    input[type="number"],
+    input[type="email"],
+    input[type="url"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="color"] {
+        font-size: 16px;
     }
 }
 
