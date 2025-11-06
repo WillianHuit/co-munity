@@ -43,6 +43,8 @@ async function loadReportsData() {
         const googleSheetsURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQsQgn3k99SeflscYBoGEMxOV-VfoG6KjeU11dHUse7n3BNloWofEbK5aYWeCO26RZFSD7x-M33fSTm/pub?gid=397731581&single=true&output=csv';
         const response = await fetch(googleSheetsURL);
 
+        console.log('Fetching reports from:', googleSheetsURL);
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -52,7 +54,7 @@ async function loadReportsData() {
 
     } catch (error) {
         console.error('Error loading reports:', error);
-        loadSampleReportsData();
+        //loadSampleReportsData();
     }
 
     applyFilters();
@@ -323,14 +325,19 @@ function createReportCard(report) {
 
 // Format date helper
 function formatDate(dateString) {
-    if (!dateString) return 'No disponible';
+    if (!dateString || typeof dateString !== 'string') return 'No disponible';
 
     try {
         const [year, month, day] = dateString.split('-').map(Number);
+
+        if (!year || !month || !day) {
+            throw new Error('Invalid date components');
+        }
+
         return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
     } catch (error) {
         console.error('Error formatting date:', error);
-        return dateString;
+        return 'No disponible';
     }
 }
 
