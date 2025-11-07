@@ -459,7 +459,8 @@ function updateStats() {
 
 // View on map (redirect to main page)
 function viewOnMap(lat, lng) {
-    window.open(`index.html?lat=${lat}&lng=${lng}&zoom=18`, '_blank');
+    // Navegar en la misma pestaña hacia la página del mapa con coordenadas
+    window.location.href = `index.html?lat=${lat}&lng=${lng}&zoom=18`;
 }
 
 // Copy location to clipboard
