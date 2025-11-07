@@ -139,6 +139,22 @@ function initializeMap(parameters) {
     });
 }
 
+// Add a marker to indicate the user's location
+function addUserLocationMarker(lat, lng) {
+    const userLocationMarker = L.marker([lat, lng], {
+        title: 'Tu ubicación',
+        icon: L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34]
+        })
+    });
+
+    userLocationMarker.bindPopup('Estás aquí').openPopup();
+    userLocationMarker.addTo(map);
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Modal functionality
@@ -570,15 +586,93 @@ function initializeMobileMenu() {
     }
 }
 
-// Add a button to center the map to the user's location
-function addCenterToLocationButton() {
-    const mapControls = document.querySelector('.map-controls');
-    if (!mapControls) return;
+// Add a marker to indicate the user's location
+function addUserLocationMarker(lat, lng) {
+    // Remove any existing user location marker
+    map.eachLayer(function(layer) {
+        if (layer.options && layer.options.isUserLocation) {
+            map.removeLayer(layer);
+        }
+    });
 
+    const userLocationMarker = L.marker([lat, lng], {
+        title: 'Tu ubicación',
+        isUserLocation: true, // Custom property to identify this marker
+        icon: L.icon({
+            iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6"/>
+                    <path d="m21 12-6 0m-6 0-6 0"/>
+                </svg>
+            `),
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12],
+            className: 'user-location-marker'
+        })
+    });
+
+    userLocationMarker.bindPopup('📍 Estás aquí').openPopup();
+    userLocationMarker.addTo(map);
+    
+    // Add a circle to show accuracy if available
+    const accuracy = 100; // Default accuracy in meters
+    const circle = L.circle([lat, lng], {
+        radius: accuracy,
+        color: '#2563eb',
+        fillColor: '#3b82f6',
+        fillOpacity: 0.1,
+        weight: 2,
+        isUserLocation: true
+    }).addTo(map);
+}
+
+// Add a floating button to center the map to the user's location
+function addCenterToLocationButton() {
+    const mapContainer = document.getElementById('map');
+    if (!mapContainer) return;
+
+    // Create floating button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'location-button-container';
+    buttonContainer.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        border: 1px solid #ccc;
+    `;
+
+    // Create the button
     const button = document.createElement('button');
-    button.textContent = 'Centrar en mi ubicación';
-    button.className = 'btn btn-primary';
-    button.style.marginLeft = '10px';
+    button.innerHTML = '📍'; // Location pin emoji as icon
+    button.title = 'Centrar en mi ubicación';
+    button.style.cssText = `
+        width: 34px;
+        height: 34px;
+        border: none;
+        background: white;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: background-color 0.2s ease;
+    `;
+
+    // Add hover effect
+    button.addEventListener('mouseenter', function() {
+        this.style.backgroundColor = '#f5f5f5';
+    });
+    
+    button.addEventListener('mouseleave', function() {
+        this.style.backgroundColor = 'white';
+    });
 
     button.addEventListener('click', function() {
         if (!navigator.geolocation) {
@@ -586,19 +680,39 @@ function addCenterToLocationButton() {
             return;
         }
 
+        // Show loading state
+        this.innerHTML = '⏳';
+        this.style.cursor = 'not-allowed';
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
                 map.setView([latitude, longitude], 15);
+                addUserLocationMarker(latitude, longitude);
+                
+                // Reset button
+                this.innerHTML = '📍';
+                this.style.cursor = 'pointer';
             },
             (error) => {
                 alert('No se pudo obtener tu ubicación. Por favor, verifica los permisos.');
                 console.error('Geolocation error:', error);
+                
+                // Reset button
+                this.innerHTML = '📍';
+                this.style.cursor = 'pointer';
             }
         );
     });
 
-    mapControls.appendChild(button);
+    buttonContainer.appendChild(button);
+    
+    // Make map container relative if it's not already
+    if (getComputedStyle(mapContainer).position === 'static') {
+        mapContainer.style.position = 'relative';
+    }
+    
+    mapContainer.appendChild(buttonContainer);
 }
 
 // Export functions for potential external use
