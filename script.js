@@ -18,9 +18,22 @@ let selectedCoordinates = null;
 let touchTimeout = null;
 let isTouchDevice = false;
 
+getURLParametersAndPositionMap = function() {
+    const params = new URLSearchParams(window.location.search);
+    let lat = parseFloat(params.get('lat'));
+    let lng = parseFloat(params.get('lng'));
+    let zoom = parseInt(params.get('zoom'), 10);
+    if (!isNaN(lat) && !isNaN(lng) && !isNaN(zoom)) {
+        return { lat, lng, zoom };
+    }
+    return null;
+};
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    initializeMap();
+    let parameters = getURLParametersAndPositionMap();
+
+    initializeMap(parameters);
     setupEventListeners();
     loadReports();
     //loadTransmetroRoutes();
@@ -85,12 +98,21 @@ document.addEventListener('DOMContentLoaded', function() {
             hideContextMenu();
         }
     });
+
+    // Add a button to center the map to the user's location
+    addCenterToLocationButton();
 });
 
 // Initialize Leaflet map
-function initializeMap() {
-    // Center on Guatemala City
-    map = L.map('map').setView([14.6349, -90.5069], 12);
+function initializeMap(parameters) {
+
+    if (parameters) {
+        // Center on the provided coordinates
+        map = L.map('map').setView([parameters.lat, parameters.lng], parameters.zoom);
+    } else {
+        // Center on Guatemala City
+        map = L.map('map').setView([14.6349, -90.5069], 12);
+    }
     // Limitar el área navegable a Guatemala
     var guatemalaBounds = L.latLngBounds([
         [13.7300, -92.2462], // Suroeste
@@ -546,6 +568,37 @@ function initializeMobileMenu() {
             }
         });
     }
+}
+
+// Add a button to center the map to the user's location
+function addCenterToLocationButton() {
+    const mapControls = document.querySelector('.map-controls');
+    if (!mapControls) return;
+
+    const button = document.createElement('button');
+    button.textContent = 'Centrar en mi ubicación';
+    button.className = 'btn btn-primary';
+    button.style.marginLeft = '10px';
+
+    button.addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert('La geolocalización no es compatible con tu navegador.');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                map.setView([latitude, longitude], 15);
+            },
+            (error) => {
+                alert('No se pudo obtener tu ubicación. Por favor, verifica los permisos.');
+                console.error('Geolocation error:', error);
+            }
+        );
+    });
+
+    mapControls.appendChild(button);
 }
 
 // Export functions for potential external use
